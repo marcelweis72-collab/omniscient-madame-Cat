@@ -418,7 +418,7 @@ private fun Footer(
             Spacer(Modifier.height(if (openCard != null) 12.dp else 0.dp))
             SleepNotice(fonts, onNewDay)
             Spacer(Modifier.height(8.dp))
-            OrnateButton("Katze zurückholen", "mit einem kurzen Video", fonts, onWake)
+            OrnateButton("Katze aufwecken", "mit einem kurzen Video", fonts, onWake)
             BasicText(
                 "Werbefrei: unbegrenzt Sprüche",
                 modifier = Modifier
