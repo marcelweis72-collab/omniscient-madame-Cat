@@ -21,9 +21,12 @@ und legt dir einen Spruch auf den Tisch, halb Glückskeks, halb Wahrsagerin.
 
 ## APK aufs Handy
 
-1. Auf GitHub: Actions, letzter Lauf von "APK bauen", unten `omniscient-madame-cat-debug` herunterladen.
-2. ZIP entpacken, die APK aufs Handy kopieren und öffnen.
+1. Im Handy-Browser (bei GitHub angemeldet, das Repo ist privat) diesen Link öffnen:
+   https://github.com/marcelweis72-collab/omniscient-madame-Cat/releases/download/neuester-build/omniscient-madame-cat.apk
+2. Die heruntergeladene APK antippen.
 3. Android fragt, ob du Apps aus dieser Quelle erlauben willst. Einmal erlauben.
+
+Jeder Push auf `main` ersetzt die APK hinter diesem Link durch die neueste Version.
 
 ## Selbst bauen
 

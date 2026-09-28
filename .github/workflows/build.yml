@@ -8,6 +8,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
 
@@ -31,3 +33,18 @@ jobs:
         with:
           name: omniscient-madame-cat-debug
           path: app/build/outputs/apk/debug/*.apk
+
+      # Fester Link fürs Handy, direkt zur APK statt zu einem ZIP:
+      # https://github.com/<besitzer>/<repo>/releases/download/neuester-build/omniscient-madame-cat.apk
+      - name: APK als Release "neuester-build" veröffentlichen
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp app/build/outputs/apk/debug/app-debug.apk omniscient-madame-cat.apk
+          gh release delete neuester-build --cleanup-tag --yes || true
+          gh release create neuester-build omniscient-madame-cat.apk \
+            --target "$GITHUB_SHA" \
+            --prerelease \
+            --title "Neuester Build" \
+            --notes "Automatisch gebaut aus ${GITHUB_SHA::7}. Zum Testen auf dem Handy: APK herunterladen und öffnen."
