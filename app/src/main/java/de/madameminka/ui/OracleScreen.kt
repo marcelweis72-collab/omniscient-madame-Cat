@@ -155,7 +155,7 @@ private fun Header(state: OracleUiState, fonts: OracleFonts, onToggleMusic: () -
         modifier
             .fillMaxWidth()
             .statusBarsPadding()
-            .padding(top = 40.dp, start = 12.dp, end = 12.dp),
+            .padding(top = 58.dp, start = 12.dp, end = 12.dp),
     ) {
         Column(Modifier.align(Alignment.TopCenter), horizontalAlignment = Alignment.CenterHorizontally) {
             BasicText(
