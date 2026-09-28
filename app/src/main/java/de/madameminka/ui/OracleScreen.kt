@@ -71,9 +71,28 @@ private const val TABLE_TOP = 0.64f
 
 @Composable
 fun OracleScreen(vm: OracleViewModel) {
-    val state = vm.state
+    OracleScene(
+        state = vm.state,
+        onCatTap = vm::onCatTapped,
+        onToggleMusic = vm::toggleMusic,
+        onExtra = vm::requestExtra,
+        onNewDay = vm::restoreDay,
+        onAdFinished = vm::onAdFinished,
+    )
+}
+
+/** Der ganze Bildschirm für einen festen Zustand. Getrennt vom ViewModel, damit Screenshot-Tests ihn zeichnen können. */
+@Composable
+fun OracleScene(
+    state: OracleUiState,
+    onCatTap: () -> Unit,
+    onToggleMusic: () -> Unit,
+    onExtra: () -> Unit,
+    onNewDay: () -> Unit,
+    onAdFinished: (Boolean) -> Unit,
+) {
     val fonts = rememberOracleFonts()
-    val onCatTap by rememberUpdatedState(vm::onCatTapped)
+    val currentOnCatTap by rememberUpdatedState(onCatTap)
     val time = rememberFrameSeconds()
     val ballGlow by rememberBallGlow(state.mood)
     val catAssets = rememberCatAssets()
@@ -101,7 +120,7 @@ fun OracleScreen(vm: OracleViewModel) {
                     indication = null,
                     onClickLabel = "Die Katze befragen",
                     role = Role.Button,
-                ) { onCatTap() },
+                ) { currentOnCatTap() },
         )
         TableForeground(TABLE_TOP, time, Modifier.fillMaxSize())
         BallAndPaws(
@@ -113,17 +132,17 @@ fun OracleScreen(vm: OracleViewModel) {
         )
         SceneLighting(TABLE_TOP, time, ballCenter, ballGlow, Modifier.fillMaxSize())
 
-        Header(state, fonts, onToggleMusic = vm::toggleMusic, modifier = Modifier.align(Alignment.TopCenter))
+        Header(state, fonts, onToggleMusic = onToggleMusic, modifier = Modifier.align(Alignment.TopCenter))
         Footer(
             state,
             fonts,
-            onExtra = vm::requestExtra,
-            onNewDay = vm::restoreDay,
+            onExtra = onExtra,
+            onNewDay = onNewDay,
             modifier = Modifier.align(Alignment.BottomCenter),
         )
 
         if (state.phase == Phase.WatchingAd) {
-            PlaceholderAd(fonts, onFinished = vm::onAdFinished)
+            PlaceholderAd(fonts, onFinished = onAdFinished)
         }
     }
 }

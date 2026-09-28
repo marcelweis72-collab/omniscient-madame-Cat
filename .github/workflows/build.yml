@@ -48,3 +48,22 @@ jobs:
             --prerelease \
             --title "Neuester Build" \
             --notes "Automatisch gebaut aus ${GITHUB_SHA::7}. Zum Testen auf dem Handy: APK herunterladen und öffnen."
+
+      # Zeichnet die Katze in jedem Zustand als Bild (Robolectric, ohne Handy).
+      - name: Screenshots erzeugen
+        run: gradle testDebugUnitTest --stacktrace
+
+      # Bilder auf den Branch "screenshots", damit man sie im Repo ansehen kann.
+      - name: Screenshots auf Branch "screenshots" ablegen
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p /tmp/shots
+          cp app/build/screenshots/*.png /tmp/shots/
+          cd /tmp/shots
+          git init -q -b screenshots
+          git add .
+          git -c user.name="github-actions" -c user.email="github-actions@users.noreply.github.com" \
+            commit -q -m "Screenshots für ${GITHUB_SHA::7}"
+          git push -q -f "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" screenshots
