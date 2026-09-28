@@ -238,10 +238,12 @@ private fun Header(state: OracleUiState, fonts: OracleFonts, onToggleMusic: () -
             Crossfade(targetState = hint, animationSpec = tween(400), label = "hint") { text ->
                 BasicText(
                     text.orEmpty(),
-                    modifier = Modifier.padding(top = 6.dp, start = 40.dp, end = 40.dp),
+                    modifier = Modifier.padding(top = 8.dp, start = 40.dp, end = 40.dp),
                     style = TextStyle(
-                        fontFamily = fonts.script,
-                        fontSize = 26.sp,
+                        fontFamily = fonts.body,
+                        fontStyle = FontStyle.Italic,
+                        fontSize = 18.sp,
+                        lineHeight = 24.sp,
                         color = Palette.Paper.copy(alpha = 0.85f),
                         textAlign = TextAlign.Center,
                     ),
@@ -276,13 +278,13 @@ private fun Footer(
             exit = fadeOut(tween(300)),
         ) {
             state.spruch?.let { spruch ->
-                // Schläft die Katze, klappt die Karte zusammen, damit Katze und Kugel sichtbar bleiben.
+                // Antippen klappt die Karte zu einem schmalen Streifen, damit sie die Kugel freigibt.
+                // Schläft die Katze, ist sie von selbst zugeklappt.
                 val sleeping = state.phase == Phase.Sleeping
                 var open by remember(spruch.index, sleeping) { mutableStateOf(!sleeping) }
                 val toggle = Modifier.clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null,
-                    enabled = sleeping,
                     onClickLabel = if (open) "Karte zuklappen" else "Karte aufklappen",
                 ) { open = !open }
                 AnimatedContent(

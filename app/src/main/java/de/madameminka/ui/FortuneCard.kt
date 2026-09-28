@@ -69,13 +69,23 @@ fun FortuneCard(spruch: Spruch, fonts: OracleFonts, modifier: Modifier = Modifie
                     textAlign = TextAlign.Center,
                 ),
             )
+            Spacer(Modifier.height(8.dp))
+            BasicText(
+                "antippen zum Zuklappen",
+                style = TextStyle(
+                    fontFamily = fonts.body,
+                    fontStyle = FontStyle.Italic,
+                    fontSize = 12.sp,
+                    color = Palette.Sepia,
+                ),
+            )
         }
     }
 }
 
 /**
- * Zusammengeklappte Karte, solange die Katze schläft: ein schmaler Papierstreifen mit Symbol,
- * Kartennummer und "Dein Spruch". Antippen klappt sie wieder auf.
+ * Zusammengeklappte Karte: ein schmaler Papierstreifen mit Symbol, Kartennummer und "Dein Spruch".
+ * Erscheint, wenn man die Karte antippt oder die Katze schläft. Antippen klappt sie wieder auf.
  */
 @Composable
 fun FortuneCardCompact(spruch: Spruch, fonts: OracleFonts, modifier: Modifier = Modifier) {
