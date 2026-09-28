@@ -88,8 +88,11 @@ import kotlinx.coroutines.delay
 /** Höhe der Tischkante als Anteil der Bildschirmhöhe. */
 private const val TABLE_TOP = 0.69f
 
-/** Wie viel Reibeweg die Kugel braucht, gemessen in Breiten der Reibefläche. Etwa drei, vier Kreise. */
-private const val RUB_LAPS = 7f
+/**
+ * Wie viel Reibeweg die Kugel braucht, gemessen in Breiten der Reibefläche.
+ * Ein Kreis über die Kugel ist gut zwei Breiten lang, das hier sind also etwa zwei Kreise.
+ */
+private const val RUB_LAPS = 4.4f
 
 /** Dunkler Hof hinter Schrift, die über der leuchtenden Kugel steht. */
 private val TextBacking = Shadow(Color.Black, Offset(0f, 2f), 10f)
