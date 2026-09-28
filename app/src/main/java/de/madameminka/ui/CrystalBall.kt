@@ -67,14 +67,19 @@ fun BallAndPaws(
     Canvas(modifier) {
         val t = time.value
         val u = size.minDimension / 100f
+        val swirl = 1.6f * rub
+        val left = Offset(lx + swirl * cos(t * 2.4f), ly + swirl * sin(t * 2.4f))
+        val right = Offset(rx - swirl * cos(t * 2.4f + 0.8f), ry + swirl * sin(t * 2.4f + 0.8f))
+        // Arme liegen hinter der Kugel, nur die Pfoten davor. So umfasst die Katze die Kugel.
+        if (drawPaws) {
+            drawArm(u, shoulder = Offset(37f, 80f), paw = left, outward = -1f)
+            drawArm(u, shoulder = Offset(63f, 80f), paw = right, outward = 1f)
+        }
         drawCrystalBall(u, glow, t)
         drawInviteRings(u, invite, t)
         if (drawPaws) {
-            val swirl = 1.6f * rub
-            val left = Offset(lx + swirl * cos(t * 2.4f), ly + swirl * sin(t * 2.4f))
-            val right = Offset(rx - swirl * cos(t * 2.4f + 0.8f), ry + swirl * sin(t * 2.4f + 0.8f))
-            drawForepaw(u, shoulder = Offset(37f, 80f), paw = left, outward = -1f, glow = glow)
-            drawForepaw(u, shoulder = Offset(63f, 80f), paw = right, outward = 1f, glow = glow)
+            drawPaw(u, left, glow)
+            drawPaw(u, right, glow)
         }
         // Das Licht der Kugel fällt auch auf die Pfoten.
         val c = BallCenter * u
@@ -98,7 +103,7 @@ private fun pawTargets(mood: CatMood): Pair<Offset, Offset> = when (mood) {
     else -> Offset(27f, 96f) to Offset(73f, 96f)
 }
 
-private fun DrawScope.drawForepaw(u: Float, shoulder: Offset, paw: Offset, outward: Float, glow: Float) {
+private fun DrawScope.drawArm(u: Float, shoulder: Offset, paw: Offset, outward: Float) {
     val s = shoulder * u
     val p = paw * u
     val elbow = Offset((s.x + p.x) / 2f + outward * 1.5f * u, (s.y + p.y) / 2f)
@@ -106,7 +111,11 @@ private fun DrawScope.drawForepaw(u: Float, shoulder: Offset, paw: Offset, outwa
         moveTo(s.x, s.y)
         cubicTo(elbow.x, elbow.y, elbow.x, elbow.y, p.x, p.y - 2f * u)
     }
-    drawPath(arm, Palette.CatInk, style = Stroke(width = 9f * u, cap = StrokeCap.Butt))
+    drawPath(arm, Palette.CatInk, style = Stroke(width = 9f * u, cap = StrokeCap.Round))
+}
+
+private fun DrawScope.drawPaw(u: Float, paw: Offset, glow: Float) {
+    val p = paw * u
 
     val pawTopLeft = Offset(p.x - 5.5f * u, p.y - 4f * u)
     val pawSize = Size(11f * u, 7.5f * u)
