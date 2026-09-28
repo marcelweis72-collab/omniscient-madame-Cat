@@ -46,6 +46,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -73,17 +74,27 @@ fun OracleScreen(vm: OracleViewModel) {
     val state = vm.state
     val fonts = rememberOracleFonts()
     val onCatTap by rememberUpdatedState(vm::onCatTapped)
+    val time = rememberFrameSeconds()
+    val ballGlow by rememberBallGlow(state.mood)
+    val catAssets = rememberCatAssets()
 
     BoxWithConstraints(Modifier.fillMaxSize().background(Palette.InkDeep)) {
         val catSize = minOf(maxWidth * 0.74f, maxHeight * 0.40f)
+        val catLeft = (maxWidth - catSize) / 2
         val catTop = maxHeight * TABLE_TOP - catSize * 0.95f
+        val catBox = Modifier.offset(x = catLeft, y = catTop).size(catSize)
+        val ballCenter = with(LocalDensity.current) {
+            Offset(
+                (catLeft + catSize * (BallCenter.x / 100f)).toPx(),
+                (catTop + catSize * (BallCenter.y / 100f)).toPx(),
+            )
+        }
 
+        // Ebenen von hinten nach vorn: Zelt, Katze, Tisch, Kugel mit Pfoten, Licht, Bedienelemente.
         TentBackdrop(TABLE_TOP, Modifier.fillMaxSize())
         CatView(
             mood = state.mood,
-            modifier = Modifier
-                .offset(x = (maxWidth - catSize) / 2, y = catTop)
-                .size(catSize)
+            modifier = catBox
                 .semantics { contentDescription = "Omniscient Madame Cat, die Wahrsager-Katze" }
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
@@ -92,7 +103,15 @@ fun OracleScreen(vm: OracleViewModel) {
                     role = Role.Button,
                 ) { onCatTap() },
         )
-        TableForeground(TABLE_TOP, state.mood, Modifier.fillMaxSize())
+        TableForeground(TABLE_TOP, time, Modifier.fillMaxSize())
+        BallAndPaws(
+            mood = state.mood,
+            glow = ballGlow,
+            time = time,
+            drawPaws = "${state.mood.assetName}.webp" !in catAssets,
+            modifier = catBox,
+        )
+        SceneLighting(TABLE_TOP, time, ballCenter, ballGlow, Modifier.fillMaxSize())
 
         Header(state, fonts, onToggleMusic = vm::toggleMusic, modifier = Modifier.align(Alignment.TopCenter))
         Footer(

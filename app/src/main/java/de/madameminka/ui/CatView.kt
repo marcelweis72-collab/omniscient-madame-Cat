@@ -38,6 +38,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import kotlin.math.PI
+import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.random.Random
 
@@ -48,14 +49,19 @@ import kotlin.random.Random
  */
 @Composable
 fun CatView(mood: CatMood, modifier: Modifier = Modifier) {
-    val context = LocalContext.current
-    val available = remember { context.assets.list("cat")?.toSet().orEmpty() }
     val file = "${mood.assetName}.webp"
-    if (file in available) {
+    if (file in rememberCatAssets()) {
         AnimatedAssetCat(file, mood.loops, modifier)
     } else {
         PlaceholderCat(mood, modifier)
     }
+}
+
+/** Dateinamen der Blender-Animationen in assets/cat/. */
+@Composable
+fun rememberCatAssets(): Set<String> {
+    val context = LocalContext.current
+    return remember { context.assets.list("cat")?.toSet().orEmpty() }
 }
 
 @Composable
@@ -193,8 +199,7 @@ private fun DrawScope.drawCat(p: CatPose) {
         }
         drawPath(body, Palette.CatInk)
         drawPath(body, rim, style = Stroke(width = 1.4f * u))
-        drawOval(Palette.CatPaw, topLeft = o(36f, 93f), size = Size(12 * u, 6 * u))
-        drawOval(Palette.CatPaw, topLeft = o(52f, 93f), size = Size(12 * u, 6 * u))
+        // Die Vorderpfoten zeichnet BallAndPaws, weil sie vor der Kugel liegen.
         // Samthalsband mit Mondsichel-Anhänger: Madame Cat ist schließlich Wahrsagerin.
         drawArc(
             Palette.Velvet,
@@ -246,17 +251,20 @@ private fun DrawScope.drawHead(u: Float, p: CatPose, rim: Brush) {
         close()
     }
 
-    drawPath(triangle(o(32f, 30f), o(35f, 8f), o(47f, 21f)), Palette.CatInk)
-    drawPath(triangle(o(35f, 25f), o(36.5f, 13f), o(43f, 21f)), Palette.VelvetDeep)
-    withTransform({ rotate(-14f * p.twitch, pivot = o(60f, 24f)) }) {
-        val ear = triangle(o(68f, 30f), o(65f, 8f), o(53f, 21f))
+    // Große Ohren, die links und rechts unter dem Turban hervorschauen.
+    drawPath(triangle(o(30f, 32f), o(27f, 1f), o(45f, 20f)), Palette.CatInk)
+    drawPath(triangle(o(32.5f, 28f), o(29.5f, 7f), o(40f, 21f)), Palette.VelvetDeep)
+    withTransform({ rotate(-14f * p.twitch, pivot = o(63f, 22f)) }) {
+        val ear = triangle(o(70f, 32f), o(73f, 1f), o(55f, 20f))
         drawPath(ear, Palette.CatInk)
-        drawPath(triangle(o(65f, 25f), o(63.5f, 13f), o(57f, 21f)), Palette.VelvetDeep)
+        drawPath(triangle(o(67.5f, 28f), o(70.5f, 7f), o(60f, 21f)), Palette.VelvetDeep)
         drawPath(ear, rim, style = Stroke(width = 1.2f * u))
     }
 
     drawOval(Palette.CatInk, topLeft = o(30f, 18f), size = Size(40 * u, 33 * u))
     drawOval(rim, topLeft = o(30f, 18f), size = Size(40 * u, 33 * u), style = Stroke(width = 1.4f * u))
+
+    drawTurban(u, p, rim)
 
     drawEye(o(42f, 34f), u, p)
     drawEye(o(58f, 34f), u, p)
@@ -305,4 +313,92 @@ private fun DrawScope.drawEye(c: Offset, u: Float, p: CatPose) {
     val ph = eh * 0.85f
     drawOval(Palette.CatInk, topLeft = Offset(c.x - pw / 2f, c.y - ph / 2f), size = Size(pw, ph))
     drawCircle(Color.White.copy(alpha = 0.8f), radius = 0.7f * u, center = c + Offset(-1.6f * u, -eh * 0.18f))
+}
+
+/**
+ * Drapierter Turban im Stil der Zwanzigerjahre: Samt mit Falten, die zur Brosche zusammenlaufen,
+ * Messingbrosche mit Perlenkranz und eine schwarze Feder, die im Takt des Schwanzes wippt.
+ */
+private fun DrawScope.drawTurban(u: Float, p: CatPose, rim: Brush) {
+    fun o(x: Float, y: Float) = Offset(x * u, y * u)
+
+    val turban = Path().apply {
+        moveTo(34 * u, 26 * u)
+        cubicTo(32 * u, 11 * u, 41 * u, 4 * u, 50 * u, 4 * u)
+        cubicTo(59 * u, 4 * u, 68 * u, 11 * u, 66 * u, 26 * u)
+        cubicTo(60 * u, 29.5f * u, 40 * u, 29.5f * u, 34 * u, 26 * u)
+        close()
+    }
+    drawPath(
+        turban,
+        Brush.verticalGradient(
+            listOf(Palette.VelvetLight, Palette.Velvet, Palette.VelvetDeep),
+            startY = 4 * u,
+            endY = 29 * u,
+        ),
+    )
+
+    val knot = o(50f, 15f)
+    val folds = listOf(o(36f, 24f), o(42f, 27.5f), o(58f, 27.5f), o(64f, 24f), o(38f, 10f), o(62f, 10f), o(50f, 4.5f))
+    for (start in folds) {
+        val bend = Offset((start.x + knot.x) / 2f, (start.y + knot.y) / 2f + 1.8f * u)
+        val fold = Path().apply {
+            moveTo(start.x, start.y)
+            cubicTo(bend.x, bend.y, bend.x, bend.y, knot.x, knot.y)
+        }
+        drawPath(fold, Palette.VelvetDeep.copy(alpha = 0.85f), style = Stroke(width = 0.9f * u, cap = StrokeCap.Round))
+        withTransform({ translate(0.5f * u, -0.6f * u) }) {
+            drawPath(fold, Palette.VelvetLight.copy(alpha = 0.6f), style = Stroke(width = 0.4f * u, cap = StrokeCap.Round))
+        }
+    }
+    drawPath(turban, rim, style = Stroke(width = 1.2f * u))
+
+    withTransform({ rotate(3f * p.tail, pivot = o(51f, 13f)) }) {
+        drawFeather(u)
+    }
+
+    drawCircle(Palette.BrassDark, radius = 4.6f * u, center = knot)
+    for (i in 0 until 12) {
+        val a = i * (2 * PI.toFloat() / 12)
+        drawCircle(Palette.Paper, radius = 0.85f * u, center = knot + Offset(cos(a), sin(a)) * (3.9f * u))
+    }
+    drawCircle(Palette.Brass, radius = 2.6f * u, center = knot)
+    drawCircle(Palette.Ink, radius = 1.9f * u, center = knot)
+    drawCircle(Color.White.copy(alpha = 0.7f), radius = 0.5f * u, center = knot + Offset(-0.6f * u, -0.6f * u))
+}
+
+private fun DrawScope.drawFeather(u: Float) {
+    val p0 = Offset(51f, 13f) * u
+    val p1 = Offset(49f, 3f) * u
+    val p2 = Offset(44f, -4f) * u
+    val p3 = Offset(37f, -9f) * u
+    val barbColor = Color(0xFF15131A).copy(alpha = 0.92f)
+    for (i in 3..24) {
+        val t = i / 24f
+        val point = cubicPoint(p0, p1, p2, p3, t)
+        val ahead = cubicPoint(p0, p1, p2, p3, (t + 0.01f).coerceAtMost(1f))
+        val dir = (ahead - point).let { it / it.getDistance().coerceAtLeast(0.001f) }
+        val normal = Offset(-dir.y, dir.x)
+        val len = (0.8f + 4.2f * sin(PI.toFloat() * t)) * u
+        for (side in listOf(1f, -1f)) {
+            drawLine(
+                barbColor,
+                point,
+                point + normal * (len * side) - dir * (len * 0.5f),
+                strokeWidth = 0.45f * u,
+                cap = StrokeCap.Round,
+            )
+        }
+    }
+    val quill = Path().apply {
+        moveTo(p0.x, p0.y)
+        cubicTo(p1.x, p1.y, p2.x, p2.y, p3.x, p3.y)
+    }
+    drawPath(quill, Color(0xFF4A4452), style = Stroke(width = 0.6f * u, cap = StrokeCap.Round))
+    drawPath(quill, Palette.Amber.copy(alpha = 0.3f), style = Stroke(width = 0.25f * u, cap = StrokeCap.Round))
+}
+
+private fun cubicPoint(p0: Offset, p1: Offset, p2: Offset, p3: Offset, t: Float): Offset {
+    val m = 1f - t
+    return p0 * (m * m * m) + p1 * (3 * m * m * t) + p2 * (3 * m * t * t) + p3 * (t * t * t)
 }

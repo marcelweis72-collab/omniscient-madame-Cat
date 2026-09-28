@@ -1,10 +1,8 @@
 package de.madameminka.ui
 
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.State
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
@@ -15,15 +13,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StampedPathEffectStyle
-import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.unit.dp
-import de.madameminka.CatMood
 import kotlin.math.max
-import kotlin.math.min
 import kotlin.math.sin
 
 /**
@@ -71,38 +66,40 @@ fun TentBackdrop(tableTop: Float, modifier: Modifier = Modifier) {
     }
 }
 
-/**
- * Alles vor der Katze: Tisch, Kristallkugel, Kerze, Tarotkarten, dazu Kerzenlicht,
- * Papierkorn und Vignette über der ganzen Szene.
- */
+/** Tisch, Tarotkarten und Kerze vor der Katze. Die Kugel liegt eine Ebene höher (BallAndPaws). */
 @Composable
-fun TableForeground(tableTop: Float, mood: CatMood, modifier: Modifier = Modifier) {
-    val glow by animateFloatAsState(
-        targetValue = when (mood) {
-            CatMood.Thinking -> 1f
-            CatMood.Revealing -> 0.7f
-            CatMood.FallingAsleep, CatMood.Sleeping -> 0.08f
-            else -> 0.25f
-        },
-        animationSpec = tween(900),
-        label = "ballGlow",
-    )
-    val time by rememberFrameSeconds()
-    val grain = rememberGrainBrush()
-
+fun TableForeground(tableTop: Float, time: State<Float>, modifier: Modifier = Modifier) {
     Canvas(modifier) {
-        val t = time
+        val t = time.value
         val w = size.width
         val h = size.height
         val top = h * tableTop
-        val flicker = 1f + 0.07f * sin(t * 7.3f) + 0.05f * sin(t * 13.1f + 1f) + 0.03f * sin(t * 23.7f + 2f)
-
         drawTable(w, h, top)
         drawTarotDeck(w, h, top)
-        drawCrystalBall(w, h, top, glow, flicker, t)
-        val flame = drawCandle(w, h, top, flicker, t)
+        drawCandle(w, h, top, flicker(t), t)
+    }
+}
 
-        // Warmes Kerzenlicht über der ganzen Szene.
+/**
+ * Licht über der ganzen Szene: flackernde Kerze, Schein der Kugel, Papierkorn und Vignette.
+ * [ballCenter] in Pixeln, [ballGlow] von 0 bis 1.
+ */
+@Composable
+fun SceneLighting(
+    tableTop: Float,
+    time: State<Float>,
+    ballCenter: Offset,
+    ballGlow: Float,
+    modifier: Modifier = Modifier,
+) {
+    val grain = rememberGrainBrush()
+    Canvas(modifier) {
+        val t = time.value
+        val w = size.width
+        val h = size.height
+        val flicker = flicker(t)
+        val flame = candleFlameCenter(w, h, h * tableTop, flicker)
+
         drawRect(
             Brush.radialGradient(
                 0f to Palette.Amber.copy(alpha = 0.20f * flicker),
@@ -112,6 +109,18 @@ fun TableForeground(tableTop: Float, mood: CatMood, modifier: Modifier = Modifie
                 radius = max(w, h) * 0.9f,
             ),
         )
+        // Leuchtet die Kugel, erhellt sie das Gesicht der Katze von unten.
+        if (ballGlow > 0.01f) {
+            drawRect(
+                Brush.radialGradient(
+                    0f to Palette.AmberPale.copy(alpha = 0.22f * ballGlow),
+                    0.4f to Palette.Amber.copy(alpha = 0.08f * ballGlow),
+                    1f to Color.Transparent,
+                    center = ballCenter,
+                    radius = max(w, h) * 0.55f,
+                ),
+            )
+        }
         drawRect(grain, alpha = 0.07f)
         drawRect(
             Brush.radialGradient(
@@ -241,79 +250,17 @@ private fun DrawScope.drawTarotDeck(w: Float, h: Float, top: Float) {
     }
 }
 
-private fun DrawScope.drawCrystalBall(w: Float, h: Float, top: Float, glow: Float, flicker: Float, t: Float) {
-    val r = min(w, h) * 0.11f
-    val c = Offset(w * 0.5f, top + r * 0.35f)
+/** Flackern der Kerze, um 1 herum. */
+private fun flicker(t: Float) = 1f + 0.07f * sin(t * 7.3f) + 0.05f * sin(t * 13.1f + 1f) + 0.03f * sin(t * 23.7f + 2f)
 
-    // Messingsockel
-    val base = Path().apply {
-        moveTo(c.x - r * 0.75f, c.y + r * 0.75f)
-        lineTo(c.x + r * 0.75f, c.y + r * 0.75f)
-        lineTo(c.x + r * 0.95f, c.y + r * 1.15f)
-        lineTo(c.x - r * 0.95f, c.y + r * 1.15f)
-        close()
-    }
-    drawPath(
-        base,
-        Brush.horizontalGradient(
-            listOf(Palette.BrassDark, Palette.Brass, Palette.AmberPale, Palette.Brass, Palette.BrassDark),
-            startX = c.x - r,
-            endX = c.x + r,
-        ),
-    )
-
-    // Schein um die Kugel, wenn die Katze nachdenkt.
-    drawCircle(
-        Brush.radialGradient(
-            listOf(Palette.Amber.copy(alpha = 0.35f * glow), Color.Transparent),
-            center = c,
-            radius = r * 2.2f,
-        ),
-        radius = r * 2.2f,
-        center = c,
-    )
-    drawCircle(
-        Brush.radialGradient(
-            listOf(Color(0xFF34406A), Palette.Ink, Color(0xFF0B0E19)),
-            center = c - Offset(r * 0.3f, r * 0.3f),
-            radius = r * 1.3f,
-        ),
-        radius = r,
-        center = c,
-    )
-    drawCircle(
-        Brush.radialGradient(
-            listOf(Palette.Amber.copy(alpha = (0.75f * glow * flicker).coerceIn(0f, 1f)), Color.Transparent),
-            center = c,
-            radius = r,
-        ),
-        radius = r,
-        center = c,
-    )
-    // Nebelschwaden, die in der Kugel kreisen.
-    val mist = (0.10f + 0.25f * glow).coerceIn(0f, 1f)
-    for (k in 0 until 3) {
-        val angle = t * (20f + k * 11f) + k * 120f
-        drawArc(
-            Palette.Paper.copy(alpha = mist),
-            startAngle = angle,
-            sweepAngle = 110f,
-            useCenter = false,
-            topLeft = c - Offset(r * (0.75f - k * 0.18f), r * (0.45f - k * 0.1f)),
-            size = Size(r * (1.5f - k * 0.36f), r * (0.9f - k * 0.2f)),
-            style = Stroke(width = r * 0.08f, cap = StrokeCap.Round),
-        )
-    }
-    drawOval(
-        Color.White.copy(alpha = 0.28f),
-        topLeft = c + Offset(-r * 0.55f, -r * 0.7f),
-        size = Size(r * 0.45f, r * 0.28f),
-    )
-    drawCircle(Palette.AmberPale.copy(alpha = 0.25f), radius = r, center = c, style = Stroke(1.dp.toPx()))
+/** Mitte der Kerzenflamme, die Lichtquelle der Szene. */
+private fun candleFlameCenter(w: Float, h: Float, top: Float, flicker: Float): Offset {
+    val cw = w * 0.055f
+    val wickTopY = top + h * 0.045f - h * 0.11f - cw * 0.35f
+    return Offset(w * 0.86f, wickTopY - cw * 1.5f * flicker * 0.4f)
 }
 
-/** Zeichnet die Kerze und gibt die Mitte der Flamme zurück, die Lichtquelle der Szene. */
-private fun DrawScope.drawCandle(w: Float, h: Float, top: Float, flicker: Float, t: Float): Offset {
+private fun DrawScope.drawCandle(w: Float, h: Float, top: Float, flicker: Float, t: Float) {
     val cw = w * 0.055f
     val ch = h * 0.11f
     val cx = w * 0.86f
@@ -347,7 +294,7 @@ private fun DrawScope.drawCandle(w: Float, h: Float, top: Float, flicker: Float,
     val fw = cw * 0.42f
     val tip = Offset(cx + sway * fw * 0.5f, wickTop.y - fh)
     val bottomY = wickTop.y + fw * 0.2f
-    val flameCenter = Offset(cx, wickTop.y - fh * 0.4f)
+    val flameCenter = candleFlameCenter(w, h, top, flicker)
 
     drawCircle(
         Brush.radialGradient(
@@ -376,5 +323,4 @@ private fun DrawScope.drawCandle(w: Float, h: Float, top: Float, flicker: Float,
             endY = bottomY,
         ),
     )
-    return flameCenter
 }

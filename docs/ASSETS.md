@@ -25,6 +25,12 @@ kürzer, sag Bescheid, dann passe ich die Zeiten an.
   Schwaches kühles Fülllicht von links. Neutral beleuchtet wirkt die Katze im Zelt hineinkopiert.
 - **Stil:** Toon- oder Cel-Shading, kein realistisches Fell. Große Bernstein-Augen, Samthalsband mit
   Mondsichel-Anhänger, damit sie zur Platzhalter-Katze passt.
+- **Turban:** Drapierter Samtturban (Samtrot), Falten laufen zu einer Messingbrosche mit Perlenkranz
+  zusammen, darüber eine schwarze Feder. Die Ohren schauen links und rechts deutlich darunter hervor.
+- **Kugel und Pfoten:** Die Kristallkugel zeichnet die App selbst, sie leuchtet beim Nachdenken auf.
+  Sie liegt vor der Katze. Beim Nachdenken muss die Katze die Pfoten an die Kugel legen, die Pfoten
+  liegen dann aber hinter der gezeichneten Kugel. Wie wir das lösen (Pfoten als eigene Ebene rendern
+  oder die Kugel mit in Blender bauen), klären wir, wenn deine Katze so weit ist.
 - **Bildrate:** 24 fps reichen.
 - **Position:** Die Katze sitzt im unteren Bildrand. Die unteren 5 % verdeckt die Tischkante.
 - **Ausgabe:** PNG-Bildfolge mit RGBA.
