@@ -85,7 +85,8 @@ fun FortuneCard(spruch: Spruch, fonts: OracleFonts, modifier: Modifier = Modifie
 
 /**
  * Zusammengeklappte Karte: ein schmaler Papierstreifen mit Symbol, Kartennummer und "Dein Spruch".
- * Erscheint, wenn man die Karte antippt oder die Katze schläft. Antippen klappt sie wieder auf.
+ * Liegt oben unter dem Titel, sobald man die Karte antippt oder die Katze sich zurückzieht.
+ * Antippen klappt sie wieder auf.
  */
 @Composable
 fun FortuneCardCompact(spruch: Spruch, fonts: OracleFonts, modifier: Modifier = Modifier) {

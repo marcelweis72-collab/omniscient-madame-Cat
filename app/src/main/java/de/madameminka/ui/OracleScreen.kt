@@ -1,7 +1,6 @@
 package de.madameminka.ui
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -14,7 +13,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -80,6 +78,7 @@ import de.madameminka.OracleUiState
 import de.madameminka.OracleViewModel
 import de.madameminka.Phase
 import de.madameminka.ballInvites
+import de.madameminka.data.Spruch
 import java.time.Duration
 import java.time.LocalDate
 import java.time.ZonedDateTime
@@ -91,6 +90,9 @@ private const val TABLE_TOP = 0.69f
 
 /** Wie viel Reibeweg die Kugel braucht, gemessen in Breiten der Reibefläche. Etwa drei, vier Kreise. */
 private const val RUB_LAPS = 7f
+
+/** Dunkler Hof hinter Schrift, die über der leuchtenden Kugel steht. */
+private val TextBacking = Shadow(Color.Black, Offset(0f, 2f), 10f)
 
 /** So schnell verglimmt eine halb geriebene Kugel wieder, in Anteilen pro Sekunde. */
 private const val RUB_DECAY_PER_SECOND = 0.35f
@@ -249,10 +251,29 @@ fun OracleScene(
                 },
         )
 
-        Header(state, fonts, onToggleMusic = onToggleMusic, modifier = Modifier.align(Alignment.TopCenter))
+        // Offen liegt die Karte unten auf dem Tisch. Zugeklappt wandert sie als schmaler Streifen
+        // nach oben unter den Titel, damit Kugel und Text unten frei bleiben.
+        // Zieht sich die Katze zurück, ist sie von selbst zugeklappt.
+        val spruch = state.spruch?.takeIf {
+            state.phase == Phase.Revealed || state.phase == Phase.Sleeping || state.phase == Phase.WatchingAd
+        }
+        val sleeping = state.phase == Phase.Sleeping
+        var cardOpen by remember(spruch?.index, sleeping) { mutableStateOf(!sleeping) }
+        val toggleCard = { cardOpen = !cardOpen }
+
+        Header(
+            state,
+            fonts,
+            compactCard = spruch?.takeIf { !cardOpen },
+            onOpenCard = toggleCard,
+            onToggleMusic = onToggleMusic,
+            modifier = Modifier.align(Alignment.TopCenter),
+        )
         Footer(
             state,
             fonts,
+            openCard = spruch?.takeIf { cardOpen },
+            onCloseCard = toggleCard,
             onWake = onWake,
             onOpenPurchase = onOpenPurchase,
             onNewDay = onNewDay,
@@ -269,7 +290,14 @@ fun OracleScene(
 }
 
 @Composable
-private fun Header(state: OracleUiState, fonts: OracleFonts, onToggleMusic: () -> Unit, modifier: Modifier) {
+private fun Header(
+    state: OracleUiState,
+    fonts: OracleFonts,
+    compactCard: Spruch?,
+    onOpenCard: () -> Unit,
+    onToggleMusic: () -> Unit,
+    modifier: Modifier,
+) {
     Box(
         modifier
             .fillMaxWidth()
@@ -305,19 +333,37 @@ private fun Header(state: OracleUiState, fonts: OracleFonts, onToggleMusic: () -
                 Phase.Revealed -> if (state.adFree && state.mood == CatMood.Idle) "Reibe die Kugel für den nächsten Spruch." else null
                 else -> null
             }
-            Crossfade(targetState = hint, animationSpec = tween(400), label = "hint") { text ->
-                BasicText(
-                    text.orEmpty(),
-                    modifier = Modifier.padding(top = 8.dp, start = 40.dp, end = 40.dp),
-                    style = TextStyle(
-                        fontFamily = fonts.body,
-                        fontStyle = FontStyle.Italic,
-                        fontSize = 18.sp,
-                        lineHeight = 24.sp,
-                        color = Palette.Paper.copy(alpha = 0.85f),
-                        textAlign = TextAlign.Center,
-                    ),
-                )
+            // Ein Hinweis hat Vorrang, danach kehrt der eingeklappte Spruch zurück.
+            val slot: Any? = hint ?: compactCard
+            Crossfade(targetState = slot, animationSpec = tween(400), label = "hint") { content ->
+                if (content is Spruch) {
+                    FortuneCardCompact(
+                        content,
+                        fonts,
+                        Modifier
+                            .padding(top = 10.dp, start = 12.dp, end = 12.dp)
+                            .fillMaxWidth()
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null,
+                                onClickLabel = "Karte aufklappen",
+                                onClick = onOpenCard,
+                            ),
+                    )
+                } else {
+                    BasicText(
+                        (content as? String).orEmpty(),
+                        modifier = Modifier.padding(top = 8.dp, start = 40.dp, end = 40.dp),
+                        style = TextStyle(
+                            fontFamily = fonts.body,
+                            fontStyle = FontStyle.Italic,
+                            fontSize = 18.sp,
+                            lineHeight = 24.sp,
+                            color = Palette.Paper.copy(alpha = 0.85f),
+                            textAlign = TextAlign.Center,
+                        ),
+                    )
+                }
             }
         }
         MusicToggle(state.musicOn, onToggleMusic, Modifier.align(Alignment.TopEnd))
@@ -328,57 +374,52 @@ private fun Header(state: OracleUiState, fonts: OracleFonts, onToggleMusic: () -
 private fun Footer(
     state: OracleUiState,
     fonts: OracleFonts,
+    openCard: Spruch?,
+    onCloseCard: () -> Unit,
     onWake: () -> Unit,
     onOpenPurchase: () -> Unit,
     onNewDay: () -> Unit,
     modifier: Modifier,
 ) {
-    val showCard = state.spruch != null &&
-        (state.phase == Phase.Revealed || state.phase == Phase.Sleeping || state.phase == Phase.WatchingAd)
     Column(
         modifier
             .fillMaxWidth()
             .navigationBarsPadding()
-            .padding(start = 24.dp, end = 24.dp, bottom = 20.dp),
+            .padding(start = 24.dp, end = 24.dp, bottom = 12.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         AnimatedVisibility(
-            visible = showCard,
+            visible = openCard != null,
             enter = fadeIn(tween(700)) + slideInVertically(tween(700)) { it / 3 },
-            exit = fadeOut(tween(300)),
+            exit = fadeOut(tween(250)),
         ) {
-            state.spruch?.let { spruch ->
-                // Antippen klappt die Karte zu einem schmalen Streifen, damit sie die Kugel freigibt.
-                // Schläft die Katze, ist sie von selbst zugeklappt.
-                val sleeping = state.phase == Phase.Sleeping
-                var open by remember(spruch.index, sleeping) { mutableStateOf(!sleeping) }
-                val toggle = Modifier.clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null,
-                    onClickLabel = if (open) "Karte zuklappen" else "Karte aufklappen",
-                ) { open = !open }
-                AnimatedContent(
-                    targetState = open,
-                    transitionSpec = { fadeIn(tween(350)) togetherWith fadeOut(tween(250)) },
-                    label = "card",
-                ) { expanded ->
-                    if (expanded) {
-                        FortuneCard(spruch, fonts, Modifier.fillMaxWidth().then(toggle))
-                    } else {
-                        FortuneCardCompact(spruch, fonts, Modifier.fillMaxWidth().then(toggle))
-                    }
-                }
+            // Beim Ausblenden ist openCard schon null, dann bleibt die zuletzt gezeigte Karte stehen.
+            val last = remember { mutableStateOf<Spruch?>(null) }
+            if (openCard != null) last.value = openCard
+            last.value?.let { spruch ->
+                FortuneCard(
+                    spruch,
+                    fonts,
+                    Modifier
+                        .fillMaxWidth()
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                            onClickLabel = "Karte zuklappen",
+                            onClick = onCloseCard,
+                        ),
+                )
             }
         }
         if (state.phase == Phase.Sleeping) {
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(if (openCard != null) 12.dp else 0.dp))
             SleepNotice(fonts, onNewDay)
-            Spacer(Modifier.height(10.dp))
+            Spacer(Modifier.height(8.dp))
             OrnateButton("Katze zurückholen", "mit einem kurzen Video", fonts, onWake)
             BasicText(
                 "Werbefrei: unbegrenzt Sprüche",
                 modifier = Modifier
-                    .padding(top = 6.dp)
+                    .padding(top = 2.dp)
                     .clickable(role = Role.Button, onClick = onOpenPurchase)
                     .padding(horizontal = 12.dp, vertical = 6.dp),
                 style = TextStyle(
@@ -401,10 +442,11 @@ private fun SleepNotice(fonts: OracleFonts, onNewDay: () -> Unit) {
             "Madame Cat hat sich zurückgezogen\nund befragt die Geister.",
             style = TextStyle(
                 fontFamily = fonts.script,
-                fontSize = 26.sp,
-                lineHeight = 30.sp,
-                color = Palette.Paper.copy(alpha = 0.9f),
+                fontSize = 23.sp,
+                lineHeight = 26.sp,
+                color = Palette.Paper,
                 textAlign = TextAlign.Center,
+                shadow = TextBacking,
             ),
         )
         BasicText(
@@ -418,8 +460,9 @@ private fun SleepNotice(fonts: OracleFonts, onNewDay: () -> Unit) {
                 fontFamily = fonts.body,
                 fontSize = 15.sp,
                 letterSpacing = 0.5.sp,
-                color = Palette.Amber.copy(alpha = 0.9f),
+                color = Palette.Amber,
                 textAlign = TextAlign.Center,
+                shadow = TextBacking,
             ),
         )
     }
