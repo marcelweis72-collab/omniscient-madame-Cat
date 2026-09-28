@@ -31,7 +31,13 @@ Kotlin, Jetpack Compose, keine Material-Komponenten. Sprache der App: Deutsch, D
 ## Sprüche (`app/src/main/assets/sprueche.json`)
 - Drei Gruppen: `glueckskeks`, `wahrsager`, `katze`.
 - Keine Vorhersagen zu Krankheit, Tod, Trennung oder Geldverlust.
-- Kurz: höchstens zwei Sätze, passt auf eine Karte.
+- Kurz: meist zwei, höchstens drei kurze Sätze, passt auf eine Karte.
+- Jeder Spruch muss sich ins eigene Leben hineindeuten lassen (Barnum-Effekt):
+  - handelt von Innerem: Wunsch, Zweifel, Entscheidung, Geduld, ein Mensch, eine Veränderung
+  - bleibt offen: "etwas", "jemand", "eine Sache" statt konkreter Dinge wie Bus, Socke, Parkplatz
+  - lässt sich nicht widerlegen: keine Zahlen, Uhrzeiten, Wochentage, Buchstaben
+  - Pointen sind erlaubt, brauchen aber einen deutbaren Kern (Beispiel: "Der Turm steht noch" ist nur Pointe;
+    "Was nur aus Gewohnheit steht, darf fallen, damit Neues Platz hat" lässt sich deuten)
 
 ## Austauschbare Assets (ohne Code-Änderung)
 - `assets/cat/<zustand>.webp`: Blender-Animationen, siehe `docs/ASSETS.md`.
