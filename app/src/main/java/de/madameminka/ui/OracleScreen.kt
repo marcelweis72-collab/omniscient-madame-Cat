@@ -84,7 +84,7 @@ fun OracleScreen(vm: OracleViewModel) {
             modifier = Modifier
                 .offset(x = (maxWidth - catSize) / 2, y = catTop)
                 .size(catSize)
-                .semantics { contentDescription = "Madame Minka, die Wahrsager-Katze" }
+                .semantics { contentDescription = "Omniscient Madame Cat, die Wahrsager-Katze" }
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null,
@@ -119,7 +119,17 @@ private fun Header(state: OracleUiState, fonts: OracleFonts, onToggleMusic: () -
     ) {
         Column(Modifier.align(Alignment.TopCenter), horizontalAlignment = Alignment.CenterHorizontally) {
             BasicText(
-                "Madame Minka",
+                "OMNISCIENT",
+                style = TextStyle(
+                    fontFamily = fonts.title,
+                    fontSize = 14.sp,
+                    letterSpacing = 5.sp,
+                    color = Palette.Amber.copy(alpha = 0.8f),
+                    textAlign = TextAlign.Center,
+                ),
+            )
+            BasicText(
+                "Madame Cat",
                 style = TextStyle(
                     fontFamily = fonts.title,
                     fontSize = 28.sp,

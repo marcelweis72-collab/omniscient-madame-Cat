@@ -1,4 +1,4 @@
-# Madame Minka
+# Omniscient Madame Cat
 
 Android-App: Eine Comic-Katze im Wahrsagerzelt auf dem Jahrmarkt verrät Sprüche, halb Glückskeks, halb Wahrsagerin.
 Kotlin, Jetpack Compose, keine Material-Komponenten. Sprache der App: Deutsch, Du-Form.

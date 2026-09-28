@@ -1,4 +1,4 @@
-# Madame Minka
+# Omniscient Madame Cat
 
 Eine Wahrsager-Katze im Jahrmarktzelt. Tippe auf die Katze, sie miaut, schließt die Augen, denkt nach
 und legt dir einen Spruch auf den Tisch, halb Glückskeks, halb Wahrsagerin.
@@ -21,7 +21,7 @@ und legt dir einen Spruch auf den Tisch, halb Glückskeks, halb Wahrsagerin.
 
 ## APK aufs Handy
 
-1. Auf GitHub: Actions, letzter Lauf von "APK bauen", unten `madame-minka-debug` herunterladen.
+1. Auf GitHub: Actions, letzter Lauf von "APK bauen", unten `omniscient-madame-cat-debug` herunterladen.
 2. ZIP entpacken, die APK aufs Handy kopieren und öffnen.
 3. Android fragt, ob du Apps aus dieser Quelle erlauben willst. Einmal erlauben.
 

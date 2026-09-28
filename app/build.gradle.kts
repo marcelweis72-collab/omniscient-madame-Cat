@@ -11,7 +11,7 @@ android {
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "de.madameminka"
+        applicationId = "de.omniscientmadamecat"
         // 28 = Android 9, ab hier kann die App animierte WebP-Dateien (die Blender-Katze) abspielen.
         minSdk = 28
         targetSdk = 35

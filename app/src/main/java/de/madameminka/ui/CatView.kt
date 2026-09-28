@@ -195,7 +195,7 @@ private fun DrawScope.drawCat(p: CatPose) {
         drawPath(body, rim, style = Stroke(width = 1.4f * u))
         drawOval(Palette.CatPaw, topLeft = o(36f, 93f), size = Size(12 * u, 6 * u))
         drawOval(Palette.CatPaw, topLeft = o(52f, 93f), size = Size(12 * u, 6 * u))
-        // Samthalsband mit Mondsichel-Anhänger: Madame Minka ist schließlich Wahrsagerin.
+        // Samthalsband mit Mondsichel-Anhänger: Madame Cat ist schließlich Wahrsagerin.
         drawArc(
             Palette.Velvet,
             startAngle = 20f,
