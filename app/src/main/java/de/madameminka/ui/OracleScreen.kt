@@ -18,6 +18,8 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
@@ -38,11 +40,13 @@ import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
@@ -53,10 +57,14 @@ import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
@@ -72,14 +80,20 @@ import de.madameminka.OracleUiState
 import de.madameminka.OracleViewModel
 import de.madameminka.Phase
 import de.madameminka.ballInvites
-import kotlinx.coroutines.delay
 import java.time.Duration
 import java.time.LocalDate
 import java.time.ZonedDateTime
 import java.util.Locale
+import kotlinx.coroutines.delay
 
 /** Höhe der Tischkante als Anteil der Bildschirmhöhe. */
 private const val TABLE_TOP = 0.69f
+
+/** Wie viel Reibeweg die Kugel braucht, gemessen in Breiten der Reibefläche. Etwa drei, vier Kreise. */
+private const val RUB_LAPS = 7f
+
+/** So schnell verglimmt eine halb geriebene Kugel wieder, in Anteilen pro Sekunde. */
+private const val RUB_DECAY_PER_SECOND = 0.35f
 
 @Composable
 fun OracleScreen(vm: OracleViewModel) {
@@ -87,6 +101,7 @@ fun OracleScreen(vm: OracleViewModel) {
         state = vm.state,
         onCatTap = vm::onCatTapped,
         onBallTap = vm::onBallTapped,
+        onBallPoke = vm::onBallPoked,
         onToggleMusic = vm::toggleMusic,
         onWake = vm::requestWake,
         onNewDay = vm::restoreDay,
@@ -104,6 +119,7 @@ fun OracleScene(
     state: OracleUiState,
     onCatTap: () -> Unit,
     onBallTap: () -> Unit,
+    onBallPoke: () -> Unit,
     onToggleMusic: () -> Unit,
     onWake: () -> Unit,
     onNewDay: () -> Unit,
@@ -112,18 +128,36 @@ fun OracleScene(
     onBuy: () -> Unit,
     onRestore: () -> Unit,
     onClosePurchase: () -> Unit,
+    /** Nur für Screenshot-Tests: So weit ist die Kugel schon gerieben. */
+    initialRub: Float = 0f,
 ) {
     val fonts = rememberOracleFonts()
     val currentOnCatTap by rememberUpdatedState(onCatTap)
     val time = rememberFrameSeconds()
     val baseGlow by rememberBallGlow(state.mood)
-    // Ist die Kugel antippbar, atmet ihr Leuchten langsam auf und ab.
+    // Lässt sich die Kugel gerade reiben, atmet ihr Leuchten langsam auf und ab.
     val invite by animateFloatAsState(if (state.ballInvites) 1f else 0f, tween(600), label = "invite")
     val breathe by rememberInfiniteTransition(label = "ballBreath").animateFloat(
         0f, 1f, infiniteRepeatable(tween(1400, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "breathe",
     )
-    val ballGlow = maxOf(baseGlow, invite * (0.2f + 0.4f * breathe))
+    // Reiben lädt die Kugel auf. Lässt man los, bevor sie voll ist, verglimmt sie langsam wieder.
+    var rub by remember { mutableFloatStateOf(initialRub) }
+    // Ein vorgegebener Wert (Screenshot) gilt als festgehalten und verglimmt nicht.
+    var rubbing by remember { mutableStateOf(initialRub > 0f) }
+    LaunchedEffect(rubbing) {
+        if (rubbing) return@LaunchedEffect
+        var last = withFrameNanos { it }
+        while (rub > 0f) {
+            val now = withFrameNanos { it }
+            rub = (rub - (now - last) / 1e9f * RUB_DECAY_PER_SECOND).coerceAtLeast(0f)
+            last = now
+        }
+    }
+    val ballGlow = maxOf(baseGlow, invite * (0.2f + 0.4f * breathe), rub)
     val currentOnBallTap by rememberUpdatedState(onBallTap)
+    val currentOnBallPoke by rememberUpdatedState(onBallPoke)
+    val canRub by rememberUpdatedState(state.ballInvites)
+    val haptics = LocalHapticFeedback.current
     val catAssets = rememberCatAssets()
 
     BoxWithConstraints(Modifier.fillMaxSize().background(Palette.InkDeep)) {
@@ -161,8 +195,9 @@ fun OracleScene(
             modifier = catBox,
         )
         SceneLighting(TABLE_TOP, time, ballCenter, ballGlow, Modifier.fillMaxSize())
-        // Unsichtbare Tippfläche über der Kugel, etwas größer als die Kugel selbst.
+        // Unsichtbare Reibefläche über der Kugel, etwas größer als die Kugel selbst.
         val ballTouch = catSize * (BALL_RADIUS * 2.6f / 100f)
+        val rubDistance = ballTouch * RUB_LAPS
         Box(
             Modifier
                 .offset(
@@ -170,13 +205,48 @@ fun OracleScene(
                     y = catTop + catSize * (BallCenter.y / 100f) - ballTouch / 2,
                 )
                 .size(ballTouch)
-                .semantics { contentDescription = "Kristallkugel" }
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null,
-                    onClickLabel = "Spruch holen",
-                    role = Role.Button,
-                ) { currentOnBallTap() },
+                .semantics {
+                    contentDescription = "Kristallkugel"
+                    role = Role.Button
+                    // Mit TalkBack lässt sich nicht reiben, dort genügt ein Doppeltipp.
+                    onClick(label = "Spruch holen") {
+                        currentOnBallTap()
+                        true
+                    }
+                }
+                .pointerInput(rubDistance) {
+                    val needed = rubDistance.toPx()
+                    awaitEachGesture {
+                        val down = awaitFirstDown()
+                        if (!canRub) return@awaitEachGesture
+                        rubbing = true
+                        var moved = 0f
+                        var done = false
+                        try {
+                            while (true) {
+                                val change = awaitPointerEvent().changes.firstOrNull { it.id == down.id } ?: break
+                                if (!change.pressed) break
+                                val step = (change.position - change.previousPosition).getDistance()
+                                change.consume()
+                                moved += step
+                                if (done || !canRub) continue
+                                val before = rub
+                                rub = (rub + step / needed).coerceAtMost(1f)
+                                // Ein leichtes Kribbeln bei jedem Viertel, ein deutliches, wenn sie voll ist.
+                                if (rub >= 1f) {
+                                    done = true
+                                    haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    currentOnBallTap()
+                                } else if ((before * 4).toInt() < (rub * 4).toInt()) {
+                                    haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                }
+                            }
+                        } finally {
+                            rubbing = false
+                        }
+                        if (!done && moved < viewConfiguration.touchSlop) currentOnBallPoke()
+                    }
+                },
         )
 
         Header(state, fonts, onToggleMusic = onToggleMusic, modifier = Modifier.align(Alignment.TopCenter))
@@ -230,9 +300,9 @@ private fun Header(state: OracleUiState, fonts: OracleFonts, onToggleMusic: () -
             )
             OrnamentRule(Modifier.width(150.dp).height(12.dp))
             val hint = state.hint ?: when (state.phase) {
-                Phase.Waiting -> "Tippe auf die Kugel."
+                Phase.Waiting -> "Reibe die Kugel."
                 Phase.Divining -> "Die Katze befragt die Sterne …"
-                Phase.Revealed -> if (state.adFree && state.mood == CatMood.Idle) "Tippe auf die Kugel für den nächsten Spruch." else null
+                Phase.Revealed -> if (state.adFree && state.mood == CatMood.Idle) "Reibe die Kugel für den nächsten Spruch." else null
                 else -> null
             }
             Crossfade(targetState = hint, animationSpec = tween(400), label = "hint") { text ->
@@ -304,7 +374,7 @@ private fun Footer(
             Spacer(Modifier.height(12.dp))
             SleepNotice(fonts, onNewDay)
             Spacer(Modifier.height(10.dp))
-            OrnateButton("Katze wecken", "mit einem kurzen Video", fonts, onWake)
+            OrnateButton("Katze zurückholen", "mit einem kurzen Video", fonts, onWake)
             BasicText(
                 "Werbefrei: unbegrenzt Sprüche",
                 modifier = Modifier
@@ -328,10 +398,11 @@ private fun SleepNotice(fonts: OracleFonts, onNewDay: () -> Unit) {
     val remaining = rememberTimeUntilMidnight(onNewDay)
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         BasicText(
-            "Die Katze schläft.",
+            "Madame Cat hat sich zurückgezogen\nund befragt die Geister.",
             style = TextStyle(
                 fontFamily = fonts.script,
-                fontSize = 28.sp,
+                fontSize = 26.sp,
+                lineHeight = 30.sp,
                 color = Palette.Paper.copy(alpha = 0.9f),
                 textAlign = TextAlign.Center,
             ),

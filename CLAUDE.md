@@ -4,9 +4,9 @@ Android-App: Eine Comic-Katze im Wahrsagerzelt auf dem Jahrmarkt verrät Sprüch
 Kotlin, Jetpack Compose, keine Material-Komponenten. Sprache der App: Deutsch, Du-Form.
 
 ## Ablauf pro Tag
-1. Tippen auf die Katze: Miauen, Augen zu, Pfoten an die Kugel, Spruch. Der erste Spruch am Tag ist gratis.
-2. Nach dem Spruch schläft die Katze ein: "Die Katze schläft." mit Countdown bis zum nächsten Gratis-Spruch (Mitternacht, Ortszeit).
-3. Knopf "Katze wecken": Belohnungs-Werbung, dann ein neuer Spruch, danach schläft sie wieder. Beliebig oft.
+1. Die Kugel reiben, bis sie voll leuchtet (ein bloßer Tipp zeigt nur den Hinweis): Miauen, Augen zu, Pfoten an die Kugel, Spruch. Der erste Spruch am Tag ist gratis. Tippen auf die Katze: wach miaut sie, in Trance schnurrt sie.
+2. Nach dem Spruch zieht sich die Katze zurück (schläft optisch): "Madame Cat hat sich zurückgezogen und befragt die Geister." mit Countdown bis zum nächsten Gratis-Spruch (Mitternacht, Ortszeit).
+3. Knopf "Katze zurückholen" oder die Kugel reiben: Belohnungs-Werbung, dann ein neuer Spruch, danach schläft sie wieder. Beliebig oft.
 - Ohne verfügbare Werbung trotzdem wecken. Die Katze straft nicht.
 - "Werbefrei" (Einmalkauf, 1 €): unbegrenzt Sprüche, die Katze schläft nicht mehr ein. "Kauf wiederherstellen" muss es immer geben.
 - Sprüche kommen aus einem gemischten Stapel, keine Wiederholung, bevor alle dran waren.

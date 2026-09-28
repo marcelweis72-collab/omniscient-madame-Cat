@@ -35,6 +35,9 @@ class ScreenshotTest {
     fun waiting() = shoot("1_wartet", OracleUiState(phase = Phase.Waiting, mood = CatMood.Idle))
 
     @Test
+    fun rubbing() = shoot("1b_gerieben", OracleUiState(phase = Phase.Waiting, mood = CatMood.Idle), rub = 0.6f)
+
+    @Test
     fun tapped() = shoot("2_angetippt", OracleUiState(phase = Phase.Divining, mood = CatMood.Tapped), settleMs = 250)
 
     @Test
@@ -66,13 +69,14 @@ class ScreenshotTest {
         ),
     )
 
-    private fun shoot(name: String, state: OracleUiState, settleMs: Long = 2500) {
+    private fun shoot(name: String, state: OracleUiState, settleMs: Long = 2500, rub: Float = 0f) {
         compose.mainClock.autoAdvance = false
         compose.setContent {
             OracleScene(
                 state = state,
                 onCatTap = {},
                 onBallTap = {},
+                onBallPoke = {},
                 onToggleMusic = {},
                 onWake = {},
                 onNewDay = {},
@@ -81,6 +85,7 @@ class ScreenshotTest {
                 onBuy = {},
                 onRestore = {},
                 onClosePurchase = {},
+                initialRub = rub,
             )
         }
         compose.mainClock.advanceTimeBy(settleMs)

@@ -36,7 +36,7 @@ enum class CatMood(val assetName: String, val loops: Boolean) {
 
 enum class Phase { Waiting, Divining, Revealed, WatchingAd, Sleeping }
 
-/** Leuchtet die Kugel einladend, weil ein Tipp auf sie gerade etwas bewirkt? */
+/** Leuchtet die Kugel einladend, weil Reiben gerade etwas bewirkt? */
 val OracleUiState.ballInvites: Boolean
     get() = phase == Phase.Waiting || phase == Phase.Sleeping ||
         (phase == Phase.Revealed && adFree && mood == CatMood.Idle)
@@ -93,13 +93,21 @@ class OracleViewModel(app: Application) : AndroidViewModel(app) {
             }
             Phase.Sleeping -> {
                 sound.purr()
-                showHint("Sie schnurrt im Schlaf.")
+                showHint("Sie schnurrt leise in ihrer Trance.")
             }
             Phase.Divining, Phase.WatchingAd -> Unit
         }
     }
 
-    /** Die Kugel ist der Knopf für Sprüche. Schläft die Katze, weckt sie ein Tipp (per Werbung). */
+    /** Nur angetippt statt gerieben: Die Katze erklärt, was die Kugel will. */
+    fun onBallPoked() {
+        if (state.ballInvites) showHint("Reibe die Kugel, bis sie hell leuchtet.")
+    }
+
+    /**
+     * Die Kugel wurde genug gerieben und leuchtet voll auf. Wach gibt sie einen Spruch,
+     * schläft die Katze, weckt das Reiben sie (per Werbung).
+     */
     fun onBallTapped() {
         when (state.phase) {
             Phase.Waiting -> divine()
@@ -123,7 +131,7 @@ class OracleViewModel(app: Application) : AndroidViewModel(app) {
             divine()
         } else {
             state = state.copy(phase = Phase.Sleeping, mood = CatMood.Sleeping)
-            showHint("Die Katze schläft weiter.")
+            showHint("Sie bleibt noch bei den Geistern.")
         }
     }
 
