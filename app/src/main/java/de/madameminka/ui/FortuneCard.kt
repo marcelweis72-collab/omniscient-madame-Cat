@@ -3,10 +3,12 @@ package de.madameminka.ui
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -25,6 +27,7 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -67,6 +70,44 @@ fun FortuneCard(spruch: Spruch, fonts: OracleFonts, modifier: Modifier = Modifie
                 ),
             )
         }
+    }
+}
+
+/**
+ * Zusammengeklappte Karte, solange die Katze schläft: ein schmaler Papierstreifen mit Symbol,
+ * Kartennummer und "Dein Spruch". Antippen klappt sie wieder auf.
+ */
+@Composable
+fun FortuneCardCompact(spruch: Spruch, fonts: OracleFonts, modifier: Modifier = Modifier) {
+    val grain = rememberGrainBrush()
+    Row(
+        modifier
+            .graphicsLayer { rotationZ = if (spruch.index % 2 == 0) -0.8f else 0.7f }
+            .drawBehind { drawCardFace(grain) }
+            .padding(horizontal = 26.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        CardSymbol(spruch.art, Modifier.size(18.dp))
+        Spacer(Modifier.width(10.dp))
+        BasicText(
+            toRoman(spruch.index + 1),
+            style = TextStyle(fontFamily = fonts.title, fontSize = 12.sp, letterSpacing = 2.sp, color = Palette.Sepia),
+        )
+        Spacer(Modifier.width(12.dp))
+        BasicText(
+            "Dein Spruch",
+            modifier = Modifier.weight(1f),
+            style = TextStyle(fontFamily = fonts.body, fontSize = 17.sp, color = Palette.CardInk),
+        )
+        BasicText(
+            "antippen",
+            style = TextStyle(
+                fontFamily = fonts.body,
+                fontStyle = FontStyle.Italic,
+                fontSize = 13.sp,
+                color = Palette.Sepia,
+            ),
+        )
     }
 }
 

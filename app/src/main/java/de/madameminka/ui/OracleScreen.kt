@@ -1,12 +1,14 @@
 package de.madameminka.ui
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -239,7 +241,28 @@ private fun Footer(
             enter = fadeIn(tween(700)) + slideInVertically(tween(700)) { it / 3 },
             exit = fadeOut(tween(300)),
         ) {
-            state.spruch?.let { FortuneCard(it, fonts, Modifier.fillMaxWidth()) }
+            state.spruch?.let { spruch ->
+                // Schläft die Katze, klappt die Karte zusammen, damit Katze und Kugel sichtbar bleiben.
+                val sleeping = state.phase == Phase.Sleeping
+                var open by remember(spruch.index, sleeping) { mutableStateOf(!sleeping) }
+                val toggle = Modifier.clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    enabled = sleeping,
+                    onClickLabel = if (open) "Karte zuklappen" else "Karte aufklappen",
+                ) { open = !open }
+                AnimatedContent(
+                    targetState = open,
+                    transitionSpec = { fadeIn(tween(350)) togetherWith fadeOut(tween(250)) },
+                    label = "card",
+                ) { expanded ->
+                    if (expanded) {
+                        FortuneCard(spruch, fonts, Modifier.fillMaxWidth().then(toggle))
+                    } else {
+                        FortuneCardCompact(spruch, fonts, Modifier.fillMaxWidth().then(toggle))
+                    }
+                }
+            }
         }
         if (state.phase == Phase.Sleeping) {
             Spacer(Modifier.height(12.dp))
