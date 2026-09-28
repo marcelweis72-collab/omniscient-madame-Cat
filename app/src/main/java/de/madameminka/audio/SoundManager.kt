@@ -18,8 +18,9 @@ import kotlin.random.Random
  * Liegen in assets/audio/ Dateien namens meow.*, purr.* oder music.* (ogg, mp3, wav), werden diese
  * benutzt. Sonst erzeugt [Synth] beim ersten Start Platzhalter-Klänge und legt sie im Cache ab.
  *
- * Die Musik startet nur von selbst, wenn das Handy nicht lautlos ist und keine andere App
- * gerade Musik spielt. Wer sie über den Schalter einschaltet, bekommt sie trotzdem.
+ * Alles läuft über die Medienlautstärke wie bei Spielen üblich, der Lautlos-Modus des Handys
+ * spielt keine Rolle. Die Musik startet nur dann nicht von selbst, wenn gerade eine andere App
+ * Musik spielt. Über den Schalter lässt sie sich jederzeit ein- und ausschalten.
  */
 class SoundManager(private val context: Context, scope: CoroutineScope) {
 
@@ -52,13 +53,13 @@ class SoundManager(private val context: Context, scope: CoroutineScope) {
     }
 
     fun meow() {
-        if (meowId !in loaded || !soundAllowed()) return
+        if (meowId !in loaded) return
         val pitch = 0.94f + Random.nextFloat() * 0.14f
         soundPool.play(meowId, MEOW_VOLUME, MEOW_VOLUME, 1, 0, pitch)
     }
 
     fun purr() {
-        if (purrId !in loaded || !soundAllowed()) return
+        if (purrId !in loaded) return
         soundPool.stop(purrStream)
         purrStream = soundPool.play(purrId, PURR_VOLUME, PURR_VOLUME, 1, 0, 1f)
     }
@@ -77,7 +78,8 @@ class SoundManager(private val context: Context, scope: CoroutineScope) {
 
     fun onForeground(musicOn: Boolean) {
         foreground = true
-        musicWanted = musicOn && audio.ringerMode == AudioManager.RINGER_MODE_NORMAL && !audio.isMusicActive
+        // Läuft schon Musik aus einer anderen App (etwa Spotify), bleibt unsere aus.
+        musicWanted = musicOn && !audio.isMusicActive
         if (musicWanted) startMusic()
     }
 
@@ -108,9 +110,6 @@ class SoundManager(private val context: Context, scope: CoroutineScope) {
     private fun startMusic() {
         player?.takeIf { !it.isPlaying }?.start()
     }
-
-    private fun soundAllowed() =
-        audio.ringerMode == AudioManager.RINGER_MODE_NORMAL || player?.isPlaying == true
 
     private fun createPlayer(): MediaPlayer? = runCatching {
         MediaPlayer().apply {
