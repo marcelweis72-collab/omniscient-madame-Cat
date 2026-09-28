@@ -91,7 +91,8 @@ fun BallAndPaws(
 }
 
 private fun pawTargets(mood: CatMood): Pair<Offset, Offset> = when (mood) {
-    CatMood.Thinking -> Offset(35f, 88f) to Offset(65f, 88f)
+    // Beim Nachdenken umfassen die Pfoten die Kugel seitlich.
+    CatMood.Thinking -> Offset(32f, 96f) to Offset(68f, 96f)
     CatMood.Revealing -> Offset(26f, 91f) to Offset(74f, 91f)
     CatMood.Tapped -> Offset(27f, 96f) to Offset(73f, 88f)
     else -> Offset(27f, 96f) to Offset(73f, 96f)

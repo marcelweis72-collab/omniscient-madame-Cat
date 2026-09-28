@@ -79,7 +79,7 @@ import java.time.ZonedDateTime
 import java.util.Locale
 
 /** Höhe der Tischkante als Anteil der Bildschirmhöhe. */
-private const val TABLE_TOP = 0.68f
+private const val TABLE_TOP = 0.69f
 
 @Composable
 fun OracleScreen(vm: OracleViewModel) {

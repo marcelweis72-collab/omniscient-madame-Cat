@@ -369,9 +369,9 @@ private fun DrawScope.drawTurban(u: Float, p: CatPose, rim: Brush) {
 
 private fun DrawScope.drawFeather(u: Float) {
     val p0 = Offset(51f, 13f) * u
-    val p1 = Offset(49f, 3f) * u
-    val p2 = Offset(44f, -4f) * u
-    val p3 = Offset(37f, -9f) * u
+    val p1 = Offset(49f, 5f) * u
+    val p2 = Offset(45f, 0f) * u
+    val p3 = Offset(39f, -3f) * u
     val barbColor = Color(0xFF15131A).copy(alpha = 0.92f)
     for (i in 3..24) {
         val t = i / 24f
