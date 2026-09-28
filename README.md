@@ -3,8 +3,8 @@
 Eine Wahrsager-Katze im Jahrmarktzelt. Tippe auf die Katze, sie miaut, schließt die Augen, denkt nach
 und legt dir einen Spruch auf den Tisch, halb Glückskeks, halb Wahrsagerin.
 
-- Ein Spruch pro Tag gratis, ein zweiter gegen ein kurzes Werbevideo.
-- Danach schläft die Katze bis Mitternacht, mit Countdown.
+- Ein Spruch pro Tag gratis, danach schläft die Katze.
+- Mit einem kurzen Werbevideo lässt sie sich beliebig oft wecken und verrät einen weiteren Spruch.
 - 300 Sprüche in drei Arten, gezogen wie aus einem gemischten Kartenstapel.
 - Samtrot, Tintenblau, Kerzenlicht, Papierkorn. Kein Material-Look, keine Glitzer-Effekte.
 

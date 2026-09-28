@@ -14,8 +14,11 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-/** Ein Spruch gratis, einer gegen Werbung, dann schläft die Katze bis Mitternacht. */
-const val MAX_PER_DAY = 2
+/**
+ * Ein Spruch pro Tag ist gratis. Danach schläft die Katze und lässt sich mit einem Werbevideo
+ * beliebig oft wecken. Nach jedem Spruch schläft sie wieder ein.
+ */
+const val FREE_PER_DAY = 1
 
 /**
  * Was die Katze gerade tut. [assetName] ist der Dateiname der Blender-Animation in
@@ -64,14 +67,10 @@ class OracleViewModel(app: Application) : AndroidViewModel(app) {
         sequence?.cancel()
         val day = store.today()
         val last = day.numbers.lastOrNull()?.let(sprueche::get)
-        state = when {
-            day.used >= MAX_PER_DAY -> state.copy(
-                phase = Phase.Sleeping, mood = CatMood.Sleeping, spruch = last, usedToday = day.used,
-            )
-            day.used > 0 -> state.copy(
-                phase = Phase.Revealed, mood = CatMood.Idle, spruch = last, usedToday = day.used,
-            )
-            else -> state.copy(phase = Phase.Waiting, mood = CatMood.Idle, spruch = null, usedToday = 0)
+        state = if (day.used >= FREE_PER_DAY) {
+            state.copy(phase = Phase.Sleeping, mood = CatMood.Sleeping, spruch = last, usedToday = day.used)
+        } else {
+            state.copy(phase = Phase.Waiting, mood = CatMood.Idle, spruch = null, usedToday = 0)
         }
     }
 
@@ -81,18 +80,15 @@ class OracleViewModel(app: Application) : AndroidViewModel(app) {
             Phase.Revealed -> if (state.mood == CatMood.Idle) {
                 sound.meow()
                 wiggle()
-                if (state.usedToday < MAX_PER_DAY) {
-                    showHint("Mehr verrät die Katze nur gegen ein kleines Opfer.")
-                }
             }
-            Phase.Sleeping -> showHint("Pssst. Die Katze schläft.")
+            Phase.Sleeping -> showHint("Pssst. Die Katze schläft. Ein kleines Opfer weckt sie.")
             Phase.Divining, Phase.WatchingAd -> Unit
         }
     }
 
-    /** Zweiter Spruch des Tages: erst Werbung, dann Weissagung. */
-    fun requestExtra() {
-        if (state.phase != Phase.Revealed || state.usedToday >= MAX_PER_DAY) return
+    /** Die schlafende Katze wecken: erst Werbung, dann Weissagung. Beliebig oft möglich. */
+    fun requestWake() {
+        if (state.phase != Phase.Sleeping) return
         sound.pauseMusic()
         state = state.copy(phase = Phase.WatchingAd, hint = null)
     }
@@ -103,8 +99,8 @@ class OracleViewModel(app: Application) : AndroidViewModel(app) {
         if (rewarded) {
             divine()
         } else {
-            state = state.copy(phase = Phase.Revealed)
-            showHint("Die Kugel bleibt dunkel. Vielleicht später.")
+            state = state.copy(phase = Phase.Sleeping, mood = CatMood.Sleeping)
+            showHint("Die Katze schläft weiter.")
         }
     }
 
@@ -143,13 +139,11 @@ class OracleViewModel(app: Application) : AndroidViewModel(app) {
             )
             delay(1400)
             state = state.copy(mood = CatMood.Idle)
-            if (day.used >= MAX_PER_DAY) {
-                // Zeit zum Lesen lassen, dann gähnt die Katze und rollt sich ein.
-                delay(6000)
-                state = state.copy(mood = CatMood.FallingAsleep)
-                delay(2200)
-                state = state.copy(phase = Phase.Sleeping, mood = CatMood.Sleeping)
-            }
+            // Zeit zum Lesen lassen, dann gähnt die Katze und rollt sich ein.
+            delay(6000)
+            state = state.copy(mood = CatMood.FallingAsleep)
+            delay(2200)
+            state = state.copy(phase = Phase.Sleeping, mood = CatMood.Sleeping)
         }
     }
 

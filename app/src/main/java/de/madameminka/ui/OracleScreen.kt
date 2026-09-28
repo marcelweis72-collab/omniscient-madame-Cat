@@ -56,7 +56,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import de.madameminka.CatMood
-import de.madameminka.MAX_PER_DAY
 import de.madameminka.OracleUiState
 import de.madameminka.OracleViewModel
 import de.madameminka.Phase
@@ -75,7 +74,7 @@ fun OracleScreen(vm: OracleViewModel) {
         state = vm.state,
         onCatTap = vm::onCatTapped,
         onToggleMusic = vm::toggleMusic,
-        onExtra = vm::requestExtra,
+        onWake = vm::requestWake,
         onNewDay = vm::restoreDay,
         onAdFinished = vm::onAdFinished,
     )
@@ -87,7 +86,7 @@ fun OracleScene(
     state: OracleUiState,
     onCatTap: () -> Unit,
     onToggleMusic: () -> Unit,
-    onExtra: () -> Unit,
+    onWake: () -> Unit,
     onNewDay: () -> Unit,
     onAdFinished: (Boolean) -> Unit,
 ) {
@@ -136,7 +135,7 @@ fun OracleScene(
         Footer(
             state,
             fonts,
-            onExtra = onExtra,
+            onWake = onWake,
             onNewDay = onNewDay,
             modifier = Modifier.align(Alignment.BottomCenter),
         )
@@ -204,7 +203,7 @@ private fun Header(state: OracleUiState, fonts: OracleFonts, onToggleMusic: () -
 private fun Footer(
     state: OracleUiState,
     fonts: OracleFonts,
-    onExtra: () -> Unit,
+    onWake: () -> Unit,
     onNewDay: () -> Unit,
     modifier: Modifier,
 ) {
@@ -224,11 +223,11 @@ private fun Footer(
         ) {
             state.spruch?.let { FortuneCard(it, fonts, Modifier.fillMaxWidth()) }
         }
-        Spacer(Modifier.height(18.dp))
-        when {
-            state.phase == Phase.Revealed && state.usedToday < MAX_PER_DAY && state.mood != CatMood.Revealing ->
-                OrnateButton("Noch ein Blick in die Kugel", "gegen ein kurzes Video", fonts, onExtra)
-            state.phase == Phase.Sleeping -> SleepNotice(fonts, onNewDay)
+        if (state.phase == Phase.Sleeping) {
+            Spacer(Modifier.height(12.dp))
+            SleepNotice(fonts, onNewDay)
+            Spacer(Modifier.height(10.dp))
+            OrnateButton("Katze wecken", "mit einem kurzen Video", fonts, onWake)
         }
     }
 }
@@ -238,7 +237,7 @@ private fun SleepNotice(fonts: OracleFonts, onNewDay: () -> Unit) {
     val remaining = rememberTimeUntilMidnight(onNewDay)
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         BasicText(
-            "Die Katze braucht Ruhe bis morgen.",
+            "Die Katze schläft.",
             style = TextStyle(
                 fontFamily = fonts.script,
                 fontSize = 28.sp,
@@ -246,10 +245,15 @@ private fun SleepNotice(fonts: OracleFonts, onNewDay: () -> Unit) {
                 textAlign = TextAlign.Center,
             ),
         )
-        Spacer(Modifier.height(4.dp))
         BasicText(
-            remaining,
-            style = TextStyle(fontFamily = fonts.title, fontSize = 26.sp, letterSpacing = 2.sp, color = Palette.Amber),
+            "Gratis-Spruch wieder in $remaining",
+            style = TextStyle(
+                fontFamily = fonts.body,
+                fontSize = 15.sp,
+                letterSpacing = 0.5.sp,
+                color = Palette.Amber.copy(alpha = 0.9f),
+                textAlign = TextAlign.Center,
+            ),
         )
     }
 }

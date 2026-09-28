@@ -49,7 +49,7 @@ class ScreenshotTest {
     @Test
     fun sleeping() = shoot(
         "5_schlaeft",
-        OracleUiState(phase = Phase.Sleeping, mood = CatMood.Sleeping, spruch = spruch, usedToday = 2),
+        OracleUiState(phase = Phase.Sleeping, mood = CatMood.Sleeping, spruch = spruch, usedToday = 1),
     )
 
     private fun shoot(name: String, state: OracleUiState, settleMs: Long = 2500) {
@@ -59,7 +59,7 @@ class ScreenshotTest {
                 state = state,
                 onCatTap = {},
                 onToggleMusic = {},
-                onExtra = {},
+                onWake = {},
                 onNewDay = {},
                 onAdFinished = {},
             )
