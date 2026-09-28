@@ -69,6 +69,32 @@ object Synth {
     }
 
     /**
+     * Schnurren: ein tiefes Brummen um 26 Hz, zweimal ein- und ausatmen. Beim Einatmen etwas
+     * höher und leiser, beim Ausatmen tiefer und voller, wie bei einer echten Katze.
+     */
+    fun purr(): ShortArray {
+        val n = (2.2 * RATE).toInt()
+        val out = DoubleArray(n)
+        val noise = Random(11)
+        var phase = 0.0
+        var smoothNoise = 0.0
+        for (i in 0 until n) {
+            val t = i.toDouble() / RATE
+            val breath = (t % 1.1) / 1.1 // 0..1 je Atemzug
+            val inhale = breath < 0.45
+            val rate = if (inhale) 27.0 else 24.0
+            phase += 2 * PI * rate / RATE
+            // Kurze Stöße pro Schwingung, wie das Flattern der Stimmlippen.
+            val pulse = (0.5 + 0.5 * sin(phase)).pow(6)
+            smoothNoise += 0.08 * ((noise.nextDouble() - 0.5) - smoothNoise)
+            val body = sin(phase * 3) * 0.35 + sin(phase * 5) * 0.2 + smoothNoise * 3.0
+            val shape = if (inhale) sin(PI * breath / 0.45) * 0.55 else sin(PI * (breath - 0.45) / 0.55)
+            out[i] = pulse * body * shape.coerceAtLeast(0.0)
+        }
+        return normalize(out, 0.8)
+    }
+
+    /**
      * 40 Sekunden Spieluhr im Dreivierteltakt über einem leisen Bordun, nahtlos in Schleife.
      * a-Moll harmonisch (mit Gis), das klingt nach Jahrmarkt bei Nacht.
      */

@@ -24,8 +24,8 @@ import kotlin.math.cos
 import kotlin.math.sin
 
 /** Mittelpunkt und Radius der Kugel im 100er-Raster der Katze. Die Tischkante liegt bei 95. */
-val BallCenter = Offset(50f, 99f)
-const val BALL_RADIUS = 15f
+val BallCenter = Offset(50f, 100f)
+const val BALL_RADIUS = 20f
 
 /** Wie hell die Kugel leuchtet. Beim Nachdenken strahlt sie voll auf. */
 @Composable
@@ -50,6 +50,7 @@ fun rememberBallGlow(mood: CatMood): State<Float> = animateFloatAsState(
 fun BallAndPaws(
     mood: CatMood,
     glow: Float,
+    invite: Float,
     time: State<Float>,
     drawPaws: Boolean,
     modifier: Modifier = Modifier,
@@ -67,12 +68,13 @@ fun BallAndPaws(
         val t = time.value
         val u = size.minDimension / 100f
         drawCrystalBall(u, glow, t)
+        drawInviteRings(u, invite, t)
         if (drawPaws) {
             val swirl = 1.6f * rub
             val left = Offset(lx + swirl * cos(t * 2.4f), ly + swirl * sin(t * 2.4f))
             val right = Offset(rx - swirl * cos(t * 2.4f + 0.8f), ry + swirl * sin(t * 2.4f + 0.8f))
-            drawForepaw(u, shoulder = Offset(42f, 82f), paw = left, outward = -1f, glow = glow)
-            drawForepaw(u, shoulder = Offset(58f, 82f), paw = right, outward = 1f, glow = glow)
+            drawForepaw(u, shoulder = Offset(37f, 80f), paw = left, outward = -1f, glow = glow)
+            drawForepaw(u, shoulder = Offset(63f, 80f), paw = right, outward = 1f, glow = glow)
         }
         // Das Licht der Kugel fällt auch auf die Pfoten.
         val c = BallCenter * u
@@ -89,10 +91,10 @@ fun BallAndPaws(
 }
 
 private fun pawTargets(mood: CatMood): Pair<Offset, Offset> = when (mood) {
-    CatMood.Thinking -> Offset(39f, 90f) to Offset(61f, 90f)
-    CatMood.Revealing -> Offset(33f, 91f) to Offset(67f, 91f)
-    CatMood.Tapped -> Offset(35f, 96f) to Offset(67f, 88f)
-    else -> Offset(34f, 97f) to Offset(66f, 97f)
+    CatMood.Thinking -> Offset(35f, 88f) to Offset(65f, 88f)
+    CatMood.Revealing -> Offset(26f, 91f) to Offset(74f, 91f)
+    CatMood.Tapped -> Offset(27f, 96f) to Offset(73f, 88f)
+    else -> Offset(27f, 96f) to Offset(73f, 96f)
 }
 
 private fun DrawScope.drawForepaw(u: Float, shoulder: Offset, paw: Offset, outward: Float, glow: Float) {
@@ -129,6 +131,22 @@ private fun DrawScope.drawForepaw(u: Float, shoulder: Offset, paw: Offset, outwa
             ),
             topLeft = pawTopLeft,
             size = pawSize,
+        )
+    }
+}
+
+/** Lichtringe, die sanft von der Kugel ausgehen, wenn ein Tipp auf sie etwas bewirkt. */
+private fun DrawScope.drawInviteRings(u: Float, invite: Float, t: Float) {
+    if (invite < 0.01f) return
+    val c = BallCenter * u
+    val r = BALL_RADIUS * u
+    for (k in 0 until 2) {
+        val phase = ((t / 2.4f) + k * 0.5f) % 1f
+        drawCircle(
+            Palette.AmberPale.copy(alpha = 0.35f * invite * (1f - phase)),
+            radius = r * (1.05f + 0.7f * phase),
+            center = c,
+            style = Stroke(width = (1.5f - phase) * u),
         )
     }
 }

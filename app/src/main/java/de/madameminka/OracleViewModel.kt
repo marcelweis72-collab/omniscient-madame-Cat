@@ -36,6 +36,11 @@ enum class CatMood(val assetName: String, val loops: Boolean) {
 
 enum class Phase { Waiting, Divining, Revealed, WatchingAd, Sleeping }
 
+/** Leuchtet die Kugel einladend, weil ein Tipp auf sie gerade etwas bewirkt? */
+val OracleUiState.ballInvites: Boolean
+    get() = phase == Phase.Waiting || phase == Phase.Sleeping ||
+        (phase == Phase.Revealed && adFree && mood == CatMood.Idle)
+
 data class OracleUiState(
     val phase: Phase = Phase.Waiting,
     val mood: CatMood = CatMood.Idle,
@@ -79,16 +84,27 @@ class OracleViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    /** Streicheln: Wach miaut die Katze, im Schlaf schnurrt sie. */
     fun onCatTapped() {
         when (state.phase) {
-            Phase.Waiting -> divine()
-            Phase.Revealed -> if (state.adFree) {
-                if (state.mood == CatMood.Idle) divine()
-            } else if (state.mood == CatMood.Idle) {
+            Phase.Waiting, Phase.Revealed -> if (state.mood == CatMood.Idle) {
                 sound.meow()
                 wiggle()
             }
-            Phase.Sleeping -> showHint("Pssst. Die Katze schläft. Ein kleines Opfer weckt sie.")
+            Phase.Sleeping -> {
+                sound.purr()
+                showHint("Sie schnurrt im Schlaf.")
+            }
+            Phase.Divining, Phase.WatchingAd -> Unit
+        }
+    }
+
+    /** Die Kugel ist der Knopf für Sprüche. Schläft die Katze, weckt sie ein Tipp (per Werbung). */
+    fun onBallTapped() {
+        when (state.phase) {
+            Phase.Waiting -> divine()
+            Phase.Revealed -> if (state.adFree && state.mood == CatMood.Idle) divine()
+            Phase.Sleeping -> requestWake()
             Phase.Divining, Phase.WatchingAd -> Unit
         }
     }

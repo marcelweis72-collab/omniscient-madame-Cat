@@ -72,6 +72,7 @@ class ScreenshotTest {
             OracleScene(
                 state = state,
                 onCatTap = {},
+                onBallTap = {},
                 onToggleMusic = {},
                 onWake = {},
                 onNewDay = {},

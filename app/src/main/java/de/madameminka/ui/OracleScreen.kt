@@ -4,6 +4,12 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -55,16 +61,17 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import de.madameminka.CatMood
 import de.madameminka.OracleUiState
 import de.madameminka.OracleViewModel
 import de.madameminka.Phase
+import de.madameminka.ballInvites
 import kotlinx.coroutines.delay
 import java.time.Duration
 import java.time.LocalDate
@@ -72,13 +79,14 @@ import java.time.ZonedDateTime
 import java.util.Locale
 
 /** Höhe der Tischkante als Anteil der Bildschirmhöhe. */
-private const val TABLE_TOP = 0.64f
+private const val TABLE_TOP = 0.68f
 
 @Composable
 fun OracleScreen(vm: OracleViewModel) {
     OracleScene(
         state = vm.state,
         onCatTap = vm::onCatTapped,
+        onBallTap = vm::onBallTapped,
         onToggleMusic = vm::toggleMusic,
         onWake = vm::requestWake,
         onNewDay = vm::restoreDay,
@@ -95,6 +103,7 @@ fun OracleScreen(vm: OracleViewModel) {
 fun OracleScene(
     state: OracleUiState,
     onCatTap: () -> Unit,
+    onBallTap: () -> Unit,
     onToggleMusic: () -> Unit,
     onWake: () -> Unit,
     onNewDay: () -> Unit,
@@ -107,11 +116,18 @@ fun OracleScene(
     val fonts = rememberOracleFonts()
     val currentOnCatTap by rememberUpdatedState(onCatTap)
     val time = rememberFrameSeconds()
-    val ballGlow by rememberBallGlow(state.mood)
+    val baseGlow by rememberBallGlow(state.mood)
+    // Ist die Kugel antippbar, atmet ihr Leuchten langsam auf und ab.
+    val invite by animateFloatAsState(if (state.ballInvites) 1f else 0f, tween(600), label = "invite")
+    val breathe by rememberInfiniteTransition(label = "ballBreath").animateFloat(
+        0f, 1f, infiniteRepeatable(tween(1400, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "breathe",
+    )
+    val ballGlow = maxOf(baseGlow, invite * (0.2f + 0.4f * breathe))
+    val currentOnBallTap by rememberUpdatedState(onBallTap)
     val catAssets = rememberCatAssets()
 
     BoxWithConstraints(Modifier.fillMaxSize().background(Palette.InkDeep)) {
-        val catSize = minOf(maxWidth * 0.74f, maxHeight * 0.40f)
+        val catSize = minOf(maxWidth * 0.92f, maxHeight * 0.48f)
         val catLeft = (maxWidth - catSize) / 2
         val catTop = maxHeight * TABLE_TOP - catSize * 0.95f
         val catBox = Modifier.offset(x = catLeft, y = catTop).size(catSize)
@@ -131,7 +147,7 @@ fun OracleScene(
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null,
-                    onClickLabel = "Die Katze befragen",
+                    onClickLabel = "Die Katze streicheln",
                     role = Role.Button,
                 ) { currentOnCatTap() },
         )
@@ -139,11 +155,29 @@ fun OracleScene(
         BallAndPaws(
             mood = state.mood,
             glow = ballGlow,
+            invite = invite,
             time = time,
             drawPaws = "${state.mood.assetName}.webp" !in catAssets,
             modifier = catBox,
         )
         SceneLighting(TABLE_TOP, time, ballCenter, ballGlow, Modifier.fillMaxSize())
+        // Unsichtbare Tippfläche über der Kugel, etwas größer als die Kugel selbst.
+        val ballTouch = catSize * (BALL_RADIUS * 2.6f / 100f)
+        Box(
+            Modifier
+                .offset(
+                    x = catLeft + catSize * (BallCenter.x / 100f) - ballTouch / 2,
+                    y = catTop + catSize * (BallCenter.y / 100f) - ballTouch / 2,
+                )
+                .size(ballTouch)
+                .semantics { contentDescription = "Kristallkugel" }
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClickLabel = "Spruch holen",
+                    role = Role.Button,
+                ) { currentOnBallTap() },
+        )
 
         Header(state, fonts, onToggleMusic = onToggleMusic, modifier = Modifier.align(Alignment.TopCenter))
         Footer(
@@ -196,9 +230,9 @@ private fun Header(state: OracleUiState, fonts: OracleFonts, onToggleMusic: () -
             )
             OrnamentRule(Modifier.width(150.dp).height(12.dp))
             val hint = state.hint ?: when (state.phase) {
-                Phase.Waiting -> "Tippe auf die Katze."
+                Phase.Waiting -> "Tippe auf die Kugel."
                 Phase.Divining -> "Die Katze befragt die Sterne …"
-                Phase.Revealed -> if (state.adFree && state.mood == CatMood.Idle) "Tippe für den nächsten Spruch." else null
+                Phase.Revealed -> if (state.adFree && state.mood == CatMood.Idle) "Tippe auf die Kugel für den nächsten Spruch." else null
                 else -> null
             }
             Crossfade(targetState = hint, animationSpec = tween(400), label = "hint") { text ->
