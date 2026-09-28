@@ -169,8 +169,9 @@ private fun Header(state: OracleUiState, fonts: OracleFonts, onToggleMusic: () -
             BasicText(
                 "Madame Cat",
                 style = TextStyle(
-                    fontFamily = fonts.title,
-                    fontSize = 28.sp,
+                    fontFamily = fonts.script,
+                    fontSize = 50.sp,
+                    lineHeight = 54.sp,
                     color = Palette.Amber,
                     textAlign = TextAlign.Center,
                     shadow = Shadow(Color.Black.copy(alpha = 0.6f), Offset(0f, 3f), 8f),
@@ -187,9 +188,8 @@ private fun Header(state: OracleUiState, fonts: OracleFonts, onToggleMusic: () -
                     text.orEmpty(),
                     modifier = Modifier.padding(top = 6.dp, start = 40.dp, end = 40.dp),
                     style = TextStyle(
-                        fontFamily = fonts.body,
-                        fontStyle = FontStyle.Italic,
-                        fontSize = 17.sp,
+                        fontFamily = fonts.script,
+                        fontSize = 26.sp,
                         color = Palette.Paper.copy(alpha = 0.85f),
                         textAlign = TextAlign.Center,
                     ),
@@ -240,9 +240,8 @@ private fun SleepNotice(fonts: OracleFonts, onNewDay: () -> Unit) {
         BasicText(
             "Die Katze braucht Ruhe bis morgen.",
             style = TextStyle(
-                fontFamily = fonts.body,
-                fontStyle = FontStyle.Italic,
-                fontSize = 18.sp,
+                fontFamily = fonts.script,
+                fontSize = 28.sp,
                 color = Palette.Paper.copy(alpha = 0.9f),
                 textAlign = TextAlign.Center,
             ),

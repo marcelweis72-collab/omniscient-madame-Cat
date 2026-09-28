@@ -16,7 +16,7 @@ Kotlin, Jetpack Compose, keine Material-Komponenten. Sprache der App: Deutsch, D
 |---|---|
 | Lila-blaue Verläufe, Glassmorphism | Flächige Farben aus `ui/Palette.kt`: Samtrot, Tintenblau, Bernstein, Papier |
 | Weiche Schatten auf jeder Karte | Trennung durch Linien und Ornamente; Schatten nur, wo etwas wirklich auf dem Tisch liegt |
-| Inter/Poppins überall | Rye für Überschriften, IM Fell English für Sprüche und Fließtext |
+| Inter/Poppins überall | Lavishly Yours (Schreibschrift) für den Namen und kurze Zeilen, Rye für Plakat-Elemente, IM Fell English für Sprüche |
 | Einheitlicher Radius überall | Karten fast eckig (6dp), Knöpfe eckig mit Doppelrahmen und Rauten |
 | Funkel-Icons, Emojis als Icons, Glitzerpartikel | Handgezeichnete Symbole: Mondsichel, fünfzackiger Stern, Pfote, Raute |
 | "Entdecke", "Mühelos", "smarter Begleiter" | Konkrete, verschmitzte Sätze in der Stimme der Katze |
