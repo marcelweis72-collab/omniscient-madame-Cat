@@ -15,7 +15,7 @@ import kotlin.random.Random
 /**
  * Miauen, Schnurren und Hintergrundmusik.
  *
- * Liegen in assets/audio/ Dateien namens meow.*, purr.* oder music.* (ogg, mp3, wav), werden diese
+ * Liegen in assets/audio/ Dateien namens meow*.*, purr.* oder music.* (ogg, mp3, wav), werden diese
  * benutzt. Sonst erzeugt [Synth] beim ersten Start Platzhalter-Klänge und legt sie im Cache ab.
  *
  * Alles läuft über die Medienlautstärke wie bei Spielen üblich, der Lautlos-Modus des Handys
@@ -26,7 +26,7 @@ class SoundManager(private val context: Context, scope: CoroutineScope) {
 
     private val audio = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
     private val soundPool = SoundPool.Builder()
-        .setMaxStreams(2)
+        .setMaxStreams(3)
         .setAudioAttributes(
             AudioAttributes.Builder()
                 .setUsage(AudioAttributes.USAGE_GAME)
@@ -35,7 +35,8 @@ class SoundManager(private val context: Context, scope: CoroutineScope) {
         )
         .build()
 
-    private var meowId = 0
+    private var meowIds = emptyList<Int>()
+    private var lastMeow = -1
     private var purrId = 0
     private val loaded = mutableSetOf<Int>()
     private var player: MediaPlayer? = null
@@ -45,17 +46,28 @@ class SoundManager(private val context: Context, scope: CoroutineScope) {
     init {
         soundPool.setOnLoadCompleteListener { _, id, status -> if (status == 0) loaded += id }
         scope.launch {
-            meowId = loadEffect("meow", "meow-v1.wav") { Synth.meow() }
+            // Alle Dateien assets/audio/meow*.mp3|ogg|wav, sonst das synthetische Miauen.
+            val meowAssets = context.assets.list("audio")?.filter { it.startsWith("meow") }?.sorted().orEmpty()
+            meowIds = if (meowAssets.isNotEmpty()) {
+                meowAssets.map { soundPool.load(context.assets.openFd("audio/$it"), 1) }
+            } else {
+                listOf(loadEffect("meow", "meow-v1.wav") { Synth.meow() })
+            }
             purrId = loadEffect("purr", "purr-v1.wav") { Synth.purr() }
             player = withContext(Dispatchers.IO) { createPlayer() }
             if (musicWanted && foreground) startMusic()
         }
     }
 
+    /** Spielt eines der Miauen zufällig, nie zweimal hintereinander dasselbe. */
     fun meow() {
-        if (meowId !in loaded) return
-        val pitch = 0.94f + Random.nextFloat() * 0.14f
-        soundPool.play(meowId, MEOW_VOLUME, MEOW_VOLUME, 1, 0, pitch)
+        val ready = meowIds.filter { it in loaded }
+        if (ready.isEmpty()) return
+        val choices = if (ready.size > 1) ready.filter { it != lastMeow } else ready
+        val id = choices.random()
+        lastMeow = id
+        val pitch = 0.96f + Random.nextFloat() * 0.08f
+        soundPool.play(id, MEOW_VOLUME, MEOW_VOLUME, 1, 0, pitch)
     }
 
     fun purr() {
