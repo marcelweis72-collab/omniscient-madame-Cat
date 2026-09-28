@@ -20,6 +20,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathOperation
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
@@ -35,7 +36,7 @@ import kotlin.math.sin
 
 /**
  * Der Spruch auf einer abgegriffenen Tarotkarte: römische Kartennummer, Symbol der Spruchart
- * (Mond = Wahrsager, Stern = Glückskeks, Pfote = Katze) und der Text im alten Buchdruck.
+ * (Mond = Wahrsager, Stern = Glückskeks, Pfote = Katze, Schlüssel = Alltag) und der Text im alten Buchdruck.
  */
 @Composable
 fun FortuneCard(spruch: Spruch, fonts: OracleFonts, modifier: Modifier = Modifier) {
@@ -128,6 +129,14 @@ private fun CardSymbol(art: Art, modifier: Modifier) {
                 drawPath(moon, Palette.Velvet)
             }
             Art.Glueckskeks -> drawPath(starPath(c, r, r * 0.42f), Palette.Velvet)
+            Art.Alltag -> {
+                // Schlüssel: Ring, Schaft, zwei Zähne.
+                val stroke = Stroke(width = r * 0.22f, cap = StrokeCap.Round)
+                drawCircle(Palette.Velvet, radius = r * 0.36f, center = c + Offset(-r * 0.5f, 0f), style = stroke)
+                drawLine(Palette.Velvet, c + Offset(-r * 0.14f, 0f), c + Offset(r * 0.9f, 0f), strokeWidth = r * 0.22f, cap = StrokeCap.Round)
+                drawLine(Palette.Velvet, c + Offset(r * 0.55f, 0f), c + Offset(r * 0.55f, r * 0.38f), strokeWidth = r * 0.2f)
+                drawLine(Palette.Velvet, c + Offset(r * 0.82f, 0f), c + Offset(r * 0.82f, r * 0.3f), strokeWidth = r * 0.2f)
+            }
             Art.Katze -> {
                 drawOval(Palette.Velvet, topLeft = c + Offset(-r * 0.45f, -r * 0.05f), size = Size(r * 0.9f, r * 0.75f))
                 val toes = listOf(-0.62f to -0.25f, -0.22f to -0.62f, 0.22f to -0.62f, 0.62f to -0.25f)

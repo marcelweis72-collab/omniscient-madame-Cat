@@ -40,10 +40,16 @@ class ScreenshotTest {
     @Test
     fun thinking() = shoot("3_denkt_nach", OracleUiState(phase = Phase.Divining, mood = CatMood.Thinking))
 
+    private val alltagSpruch = Spruch(
+        index = 423,
+        text = "Gib Dingen Zeit, sich zu entwickeln. Gras wächst nicht schneller, wenn man daran zieht.",
+        art = Art.Alltag,
+    )
+
     @Test
     fun revealed() = shoot(
         "4_spruch",
-        OracleUiState(phase = Phase.Revealed, mood = CatMood.Idle, spruch = spruch, usedToday = 1),
+        OracleUiState(phase = Phase.Revealed, mood = CatMood.Idle, spruch = alltagSpruch, usedToday = 1),
     )
 
     @Test

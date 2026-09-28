@@ -3,7 +3,7 @@ package de.madameminka.data
 import android.content.Context
 import org.json.JSONObject
 
-enum class Art { Glueckskeks, Wahrsager, Katze }
+enum class Art { Glueckskeks, Wahrsager, Katze, Alltag }
 
 data class Spruch(val index: Int, val text: String, val art: Art)
 
@@ -20,7 +20,12 @@ class SpruchRepository(context: Context) {
         val json = context.assets.open("sprueche.json").bufferedReader().use { it.readText() }
         val root = JSONObject(json)
         val result = mutableListOf<Spruch>()
-        val groups = listOf("glueckskeks" to Art.Glueckskeks, "wahrsager" to Art.Wahrsager, "katze" to Art.Katze)
+        val groups = listOf(
+            "glueckskeks" to Art.Glueckskeks,
+            "wahrsager" to Art.Wahrsager,
+            "katze" to Art.Katze,
+            "alltag" to Art.Alltag,
+        )
         for ((key, art) in groups) {
             val array = root.optJSONArray(key) ?: continue
             for (i in 0 until array.length()) {
