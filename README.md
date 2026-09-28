@@ -5,6 +5,7 @@ und legt dir einen Spruch auf den Tisch, halb Glückskeks, halb Wahrsagerin.
 
 - Ein Spruch pro Tag gratis, danach schläft die Katze.
 - Mit einem kurzen Werbevideo lässt sie sich beliebig oft wecken und verrät einen weiteren Spruch.
+- Werbefrei für einmalig 1 €: unbegrenzt Sprüche, die Katze bleibt wach.
 - 600 Sprüche: 300 mystische (Glückskeks, Wahrsager, freche Katze) und 300 bodenständige Alltagsweisheiten, gezogen wie aus einem gemischten Kartenstapel.
 - Samtrot, Tintenblau, Kerzenlicht, Papierkorn. Kein Material-Look, keine Glitzer-Effekte.
 
@@ -17,6 +18,7 @@ und legt dir einen Spruch auf den Tisch, halb Glückskeks, halb Wahrsagerin.
 | Katze | Platzhalter, wird durch die Blender-Katze ersetzt (`docs/ASSETS.md`) |
 | Miauen und Musik | synthetische Platzhalter, eigene Dateien möglich |
 | Werbung | Platzhalter, zählt bis fünf. AdMob fehlt noch |
+| Werbefrei-Kauf (1 €) | Platzhalter, schaltet sofort frei. Google Play Billing fehlt noch |
 | Sprüche | 300 Entwürfe in `app/src/main/assets/sprueche.json`, bitte selbst überarbeiten |
 
 ## APK aufs Handy
@@ -42,6 +44,7 @@ Oder das Projekt in Android Studio öffnen.
 ## Vor dem Play Store noch offen
 
 - AdMob einbinden, mit DSGVO-Einwilligungsdialog (UMP).
+- Google Play Billing für den Einmalkauf "werbefrei" (1 €) einbinden; testen geht nur über einen Play-Testkanal.
 - Datenschutzerklärung und Datensicherheits-Formular im Play Store.
 - `targetSdk` auf das Level anheben, das Google zum Zeitpunkt der Veröffentlichung verlangt.
 - Release-Signatur einrichten.

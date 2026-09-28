@@ -49,6 +49,14 @@ class OracleStore(context: Context) {
         get() = prefs.getBoolean(KEY_MUSIC, true)
         set(value) = prefs.edit().putBoolean(KEY_MUSIC, value).apply()
 
+    /**
+     * Werbefrei gekauft. Platzhalter: Später kommt der Status aus Google Play Billing
+     * (queryPurchasesAsync), nicht aus den SharedPreferences.
+     */
+    var adFree: Boolean
+        get() = prefs.getBoolean(KEY_AD_FREE, false)
+        set(value) = prefs.edit().putBoolean(KEY_AD_FREE, value).apply()
+
     private fun todayKey() = LocalDate.now().toEpochDay()
 
     private fun String.toIntList() = split(',').mapNotNull { it.toIntOrNull() }
@@ -59,5 +67,6 @@ class OracleStore(context: Context) {
         const val KEY_DECK = "deck"
         const val KEY_POS = "deck_pos"
         const val KEY_MUSIC = "music_on"
+        const val KEY_AD_FREE = "ad_free"
     }
 }

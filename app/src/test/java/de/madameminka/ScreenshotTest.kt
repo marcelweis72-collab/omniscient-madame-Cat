@@ -58,6 +58,14 @@ class ScreenshotTest {
         OracleUiState(phase = Phase.Sleeping, mood = CatMood.Sleeping, spruch = spruch, usedToday = 1),
     )
 
+    @Test
+    fun purchase() = shoot(
+        "6_werbefrei_kaufen",
+        OracleUiState(
+            phase = Phase.Sleeping, mood = CatMood.Sleeping, spruch = spruch, usedToday = 1, showPurchase = true,
+        ),
+    )
+
     private fun shoot(name: String, state: OracleUiState, settleMs: Long = 2500) {
         compose.mainClock.autoAdvance = false
         compose.setContent {
@@ -68,6 +76,10 @@ class ScreenshotTest {
                 onWake = {},
                 onNewDay = {},
                 onAdFinished = {},
+                onOpenPurchase = {},
+                onBuy = {},
+                onRestore = {},
+                onClosePurchase = {},
             )
         }
         compose.mainClock.advanceTimeBy(settleMs)

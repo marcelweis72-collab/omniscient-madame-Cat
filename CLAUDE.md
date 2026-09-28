@@ -8,6 +8,7 @@ Kotlin, Jetpack Compose, keine Material-Komponenten. Sprache der App: Deutsch, D
 2. Nach dem Spruch schläft die Katze ein: "Die Katze schläft." mit Countdown bis zum nächsten Gratis-Spruch (Mitternacht, Ortszeit).
 3. Knopf "Katze wecken": Belohnungs-Werbung, dann ein neuer Spruch, danach schläft sie wieder. Beliebig oft.
 - Ohne verfügbare Werbung trotzdem wecken. Die Katze straft nicht.
+- "Werbefrei" (Einmalkauf, 1 €): unbegrenzt Sprüche, die Katze schläft nicht mehr ein. "Kauf wiederherstellen" muss es immer geben.
 - Sprüche kommen aus einem gemischten Stapel, keine Wiederholung, bevor alle dran waren.
 
 ## Design-Regeln

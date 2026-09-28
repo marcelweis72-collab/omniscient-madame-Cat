@@ -17,6 +17,7 @@ import kotlinx.coroutines.launch
 /**
  * Ein Spruch pro Tag ist gratis. Danach schläft die Katze und lässt sich mit einem Werbevideo
  * beliebig oft wecken. Nach jedem Spruch schläft sie wieder ein.
+ * Wer "Werbefrei" gekauft hat, bekommt unbegrenzt Sprüche: Die Katze bleibt wach.
  */
 const val FREE_PER_DAY = 1
 
@@ -42,6 +43,8 @@ data class OracleUiState(
     val usedToday: Int = 0,
     val hint: String? = null,
     val musicOn: Boolean = true,
+    val adFree: Boolean = false,
+    val showPurchase: Boolean = false,
 )
 
 class OracleViewModel(app: Application) : AndroidViewModel(app) {
@@ -50,7 +53,7 @@ class OracleViewModel(app: Application) : AndroidViewModel(app) {
     private val sprueche = SpruchRepository(app)
     private val sound = SoundManager(app, viewModelScope)
 
-    var state by mutableStateOf(OracleUiState(musicOn = store.musicOn))
+    var state by mutableStateOf(OracleUiState(musicOn = store.musicOn, adFree = store.adFree))
         private set
 
     private var sequence: Job? = null
@@ -67,7 +70,9 @@ class OracleViewModel(app: Application) : AndroidViewModel(app) {
         sequence?.cancel()
         val day = store.today()
         val last = day.numbers.lastOrNull()?.let(sprueche::get)
-        state = if (day.used >= FREE_PER_DAY) {
+        state = if (state.adFree && day.used > 0) {
+            state.copy(phase = Phase.Revealed, mood = CatMood.Idle, spruch = last, usedToday = day.used)
+        } else if (day.used >= FREE_PER_DAY) {
             state.copy(phase = Phase.Sleeping, mood = CatMood.Sleeping, spruch = last, usedToday = day.used)
         } else {
             state.copy(phase = Phase.Waiting, mood = CatMood.Idle, spruch = null, usedToday = 0)
@@ -77,7 +82,9 @@ class OracleViewModel(app: Application) : AndroidViewModel(app) {
     fun onCatTapped() {
         when (state.phase) {
             Phase.Waiting -> divine()
-            Phase.Revealed -> if (state.mood == CatMood.Idle) {
+            Phase.Revealed -> if (state.adFree) {
+                if (state.mood == CatMood.Idle) divine()
+            } else if (state.mood == CatMood.Idle) {
                 sound.meow()
                 wiggle()
             }
@@ -101,6 +108,37 @@ class OracleViewModel(app: Application) : AndroidViewModel(app) {
         } else {
             state = state.copy(phase = Phase.Sleeping, mood = CatMood.Sleeping)
             showHint("Die Katze schläft weiter.")
+        }
+    }
+
+    fun openPurchase() {
+        state = state.copy(showPurchase = true)
+    }
+
+    fun closePurchase() {
+        state = state.copy(showPurchase = false)
+    }
+
+    /**
+     * Platzhalter für den Kauf. Später: BillingClient.launchBillingFlow für das Produkt
+     * "werbefrei" (einmalig, nicht verbrauchbar), bei Erfolg acknowledgePurchase und dann hierher.
+     */
+    fun buyAdFree() {
+        store.adFree = true
+        state = state.copy(adFree = true, showPurchase = false)
+        showHint("Danke! Die Katze bleibt jetzt wach.")
+        if (state.phase == Phase.Sleeping) wakeUp()
+    }
+
+    /** Platzhalter: Später fragt das Google Play nach früheren Käufen (queryPurchasesAsync). */
+    fun restorePurchase() {
+        state = state.copy(showPurchase = false)
+        if (store.adFree) {
+            state = state.copy(adFree = true)
+            showHint("Kauf wiederhergestellt.")
+            if (state.phase == Phase.Sleeping) wakeUp()
+        } else {
+            showHint("Kein früherer Kauf gefunden.")
         }
     }
 
@@ -139,11 +177,23 @@ class OracleViewModel(app: Application) : AndroidViewModel(app) {
             )
             delay(1400)
             state = state.copy(mood = CatMood.Idle)
+            if (state.adFree) return@launch
             // Zeit zum Lesen lassen, dann gähnt die Katze und rollt sich ein.
             delay(6000)
             state = state.copy(mood = CatMood.FallingAsleep)
             delay(2200)
             state = state.copy(phase = Phase.Sleeping, mood = CatMood.Sleeping)
+        }
+    }
+
+    /** Nach dem Kauf wacht die schlafende Katze auf, der letzte Spruch bleibt liegen. */
+    private fun wakeUp() {
+        sequence?.cancel()
+        sequence = viewModelScope.launch {
+            state = state.copy(phase = Phase.Revealed, mood = CatMood.Tapped)
+            sound.meow()
+            delay(700)
+            state = state.copy(mood = CatMood.Idle)
         }
     }
 

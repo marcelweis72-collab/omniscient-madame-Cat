@@ -56,6 +56,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import de.madameminka.CatMood
@@ -80,6 +81,10 @@ fun OracleScreen(vm: OracleViewModel) {
         onWake = vm::requestWake,
         onNewDay = vm::restoreDay,
         onAdFinished = vm::onAdFinished,
+        onOpenPurchase = vm::openPurchase,
+        onBuy = vm::buyAdFree,
+        onRestore = vm::restorePurchase,
+        onClosePurchase = vm::closePurchase,
     )
 }
 
@@ -92,6 +97,10 @@ fun OracleScene(
     onWake: () -> Unit,
     onNewDay: () -> Unit,
     onAdFinished: (Boolean) -> Unit,
+    onOpenPurchase: () -> Unit,
+    onBuy: () -> Unit,
+    onRestore: () -> Unit,
+    onClosePurchase: () -> Unit,
 ) {
     val fonts = rememberOracleFonts()
     val currentOnCatTap by rememberUpdatedState(onCatTap)
@@ -139,12 +148,16 @@ fun OracleScene(
             state,
             fonts,
             onWake = onWake,
+            onOpenPurchase = onOpenPurchase,
             onNewDay = onNewDay,
             modifier = Modifier.align(Alignment.BottomCenter),
         )
 
         if (state.phase == Phase.WatchingAd) {
             PlaceholderAd(fonts, onFinished = onAdFinished)
+        }
+        if (state.showPurchase) {
+            PurchaseSheet(fonts, onBuy = onBuy, onRestore = onRestore, onClose = onClosePurchase)
         }
     }
 }
@@ -183,6 +196,7 @@ private fun Header(state: OracleUiState, fonts: OracleFonts, onToggleMusic: () -
             val hint = state.hint ?: when (state.phase) {
                 Phase.Waiting -> "Tippe auf die Katze."
                 Phase.Divining -> "Die Katze befragt die Sterne …"
+                Phase.Revealed -> if (state.adFree && state.mood == CatMood.Idle) "Tippe für den nächsten Spruch." else null
                 else -> null
             }
             Crossfade(targetState = hint, animationSpec = tween(400), label = "hint") { text ->
@@ -207,6 +221,7 @@ private fun Footer(
     state: OracleUiState,
     fonts: OracleFonts,
     onWake: () -> Unit,
+    onOpenPurchase: () -> Unit,
     onNewDay: () -> Unit,
     modifier: Modifier,
 ) {
@@ -231,6 +246,20 @@ private fun Footer(
             SleepNotice(fonts, onNewDay)
             Spacer(Modifier.height(10.dp))
             OrnateButton("Katze wecken", "mit einem kurzen Video", fonts, onWake)
+            BasicText(
+                "Werbefrei: unbegrenzt Sprüche",
+                modifier = Modifier
+                    .padding(top = 6.dp)
+                    .clickable(role = Role.Button, onClick = onOpenPurchase)
+                    .padding(horizontal = 12.dp, vertical = 6.dp),
+                style = TextStyle(
+                    fontFamily = fonts.body,
+                    fontStyle = FontStyle.Italic,
+                    fontSize = 14.sp,
+                    color = Palette.AmberPale.copy(alpha = 0.8f),
+                    textDecoration = TextDecoration.Underline,
+                ),
+            )
         }
     }
 }
@@ -293,7 +322,7 @@ private fun formatUntilMidnight(): String {
 }
 
 @Composable
-private fun OrnateButton(label: String, caption: String?, fonts: OracleFonts, onClick: () -> Unit) {
+internal fun OrnateButton(label: String, caption: String?, fonts: OracleFonts, onClick: () -> Unit) {
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
     Column(
