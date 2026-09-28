@@ -253,11 +253,11 @@ private fun DrawScope.drawHead(u: Float, p: CatPose, rim: Brush) {
 
     // Große Ohren, die links und rechts unter dem Turban hervorschauen.
     drawPath(triangle(o(30f, 32f), o(27f, 1f), o(45f, 20f)), Palette.CatInk)
-    drawPath(triangle(o(32.5f, 28f), o(29.5f, 7f), o(40f, 21f)), Palette.VelvetDeep)
+    drawPath(triangle(o(32.5f, 25f), o(30f, 9f), o(38f, 20f)), Palette.VelvetDeep.copy(alpha = 0.8f))
     withTransform({ rotate(-14f * p.twitch, pivot = o(63f, 22f)) }) {
         val ear = triangle(o(70f, 32f), o(73f, 1f), o(55f, 20f))
         drawPath(ear, Palette.CatInk)
-        drawPath(triangle(o(67.5f, 28f), o(70.5f, 7f), o(60f, 21f)), Palette.VelvetDeep)
+        drawPath(triangle(o(67.5f, 25f), o(70f, 9f), o(62f, 20f)), Palette.VelvetDeep.copy(alpha = 0.8f))
         drawPath(ear, rim, style = Stroke(width = 1.2f * u))
     }
 

@@ -13,6 +13,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StampedPathEffectStyle
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -160,19 +161,30 @@ private fun DrawScope.drawCurtain(w: Float, bottom: Float, mirrored: Boolean) {
                 endX = w * 0.30f,
             ),
         )
-        // Raffhalter aus Messingkordel mit Quaste.
-        drawOval(
-            Palette.Brass,
-            topLeft = Offset(tie.x - w * 0.05f, tie.y - w * 0.012f),
-            size = Size(w * 0.10f, w * 0.024f),
-        )
-        drawLine(
-            Palette.Brass,
-            tie + Offset(w * 0.03f, 0f),
-            tie + Offset(w * 0.035f, w * 0.09f),
-            strokeWidth = w * 0.008f,
-        )
-        drawCircle(Palette.Brass, radius = w * 0.012f, center = tie + Offset(w * 0.035f, w * 0.095f))
+        // Raffhalter: eine Messingkordel, die den Vorhang an seiner schmalsten Stelle zusammenhält,
+        // mit einer Quaste an der Innenkante.
+        val rope = Path().apply {
+            moveTo(0f, tie.y - w * 0.006f)
+            cubicTo(w * 0.03f, tie.y + w * 0.014f, w * 0.07f, tie.y + w * 0.014f, w * 0.092f, tie.y)
+        }
+        drawPath(rope, Palette.BrassDark, style = Stroke(width = w * 0.016f, cap = StrokeCap.Round))
+        drawPath(rope, Palette.Brass, style = Stroke(width = w * 0.009f, cap = StrokeCap.Round))
+        val knot = Offset(w * 0.088f, tie.y + w * 0.004f)
+        drawCircle(Palette.Brass, radius = w * 0.011f, center = knot)
+        val cordEnd = knot + Offset(w * 0.004f, w * 0.045f)
+        drawLine(Palette.Brass, knot, cordEnd, strokeWidth = w * 0.004f)
+        val tassel = Path().apply {
+            moveTo(cordEnd.x - w * 0.008f, cordEnd.y)
+            lineTo(cordEnd.x + w * 0.008f, cordEnd.y)
+            lineTo(cordEnd.x + w * 0.016f, cordEnd.y + w * 0.05f)
+            lineTo(cordEnd.x - w * 0.016f, cordEnd.y + w * 0.05f)
+            close()
+        }
+        drawPath(tassel, Palette.Brass)
+        for (k in -2..2) {
+            val x = cordEnd.x + k * w * 0.006f
+            drawLine(Palette.BrassDark, Offset(x, cordEnd.y + w * 0.012f), Offset(x * 1f + k * w * 0.002f, cordEnd.y + w * 0.05f), strokeWidth = 1f)
+        }
     }
 }
 
@@ -193,8 +205,8 @@ private fun DrawScope.drawValance(w: Float, h: Float) {
         drawPath(scallop, Palette.Velvet)
         drawPath(scallop, Palette.Amber.copy(alpha = 0.55f), style = Stroke(width = 1.5.dp.toPx()))
         val tip = Offset(l + sw / 2f, depth * 1.1f)
-        drawLine(Palette.Amber.copy(alpha = 0.7f), tip, tip + Offset(0f, depth * 0.45f), strokeWidth = 1.dp.toPx())
-        drawCircle(Palette.Amber.copy(alpha = 0.8f), radius = 2.5.dp.toPx(), center = tip + Offset(0f, depth * 0.5f))
+        drawLine(Palette.Amber.copy(alpha = 0.7f), tip, tip + Offset(0f, depth * 0.22f), strokeWidth = 1.dp.toPx())
+        drawCircle(Palette.Amber.copy(alpha = 0.8f), radius = 2.5.dp.toPx(), center = tip + Offset(0f, depth * 0.27f))
     }
 }
 

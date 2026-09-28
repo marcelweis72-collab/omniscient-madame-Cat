@@ -71,8 +71,8 @@ fun BallAndPaws(
             val swirl = 1.6f * rub
             val left = Offset(lx + swirl * cos(t * 2.4f), ly + swirl * sin(t * 2.4f))
             val right = Offset(rx - swirl * cos(t * 2.4f + 0.8f), ry + swirl * sin(t * 2.4f + 0.8f))
-            drawForepaw(u, shoulder = Offset(41f, 72f), paw = left, outward = -1f, glow = glow)
-            drawForepaw(u, shoulder = Offset(59f, 72f), paw = right, outward = 1f, glow = glow)
+            drawForepaw(u, shoulder = Offset(42f, 82f), paw = left, outward = -1f, glow = glow)
+            drawForepaw(u, shoulder = Offset(58f, 82f), paw = right, outward = 1f, glow = glow)
         }
         // Das Licht der Kugel fällt auch auf die Pfoten.
         val c = BallCenter * u
@@ -98,32 +98,37 @@ private fun pawTargets(mood: CatMood): Pair<Offset, Offset> = when (mood) {
 private fun DrawScope.drawForepaw(u: Float, shoulder: Offset, paw: Offset, outward: Float, glow: Float) {
     val s = shoulder * u
     val p = paw * u
-    val elbow = Offset((s.x + p.x) / 2f + outward * 4f * u, (s.y + p.y) / 2f)
+    val elbow = Offset((s.x + p.x) / 2f + outward * 1.5f * u, (s.y + p.y) / 2f)
     val arm = Path().apply {
         moveTo(s.x, s.y)
         cubicTo(elbow.x, elbow.y, elbow.x, elbow.y, p.x, p.y - 2f * u)
     }
-    drawPath(arm, Palette.CatInk, style = Stroke(width = 8.5f * u, cap = StrokeCap.Round))
+    drawPath(arm, Palette.CatInk, style = Stroke(width = 9f * u, cap = StrokeCap.Butt))
 
     val pawTopLeft = Offset(p.x - 5.5f * u, p.y - 4f * u)
     val pawSize = Size(11f * u, 7.5f * u)
     drawOval(Palette.CatInk, topLeft = pawTopLeft, size = pawSize)
-    for (k in -1..1) {
-        val x = p.x + k * 2.6f * u
+    // Zehen nur angedeutet, als zwei feine Kerben.
+    for (k in listOf(-1f, 1f)) {
+        val x = p.x + k * 1.8f * u
         drawLine(
-            Color(0xFF3A3445),
-            Offset(x, p.y + 0.5f * u),
+            Color(0xFF2E2937),
+            Offset(x, p.y + 1.2f * u),
             Offset(x, p.y + 3.2f * u),
-            strokeWidth = 0.6f * u,
+            strokeWidth = 0.5f * u,
             cap = StrokeCap.Round,
         )
     }
-    if (glow > 0.05f) {
+    // Leuchtet die Kugel, färbt ihr Licht die Pfote von unten warm.
+    if (glow > 0.4f) {
         drawOval(
-            Palette.Amber.copy(alpha = (0.6f * glow).coerceIn(0f, 1f)),
+            Brush.verticalGradient(
+                listOf(Color.Transparent, Palette.Amber.copy(alpha = 0.55f * (glow - 0.4f) / 0.6f)),
+                startY = pawTopLeft.y,
+                endY = pawTopLeft.y + pawSize.height,
+            ),
             topLeft = pawTopLeft,
             size = pawSize,
-            style = Stroke(width = 0.8f * u),
         )
     }
 }
