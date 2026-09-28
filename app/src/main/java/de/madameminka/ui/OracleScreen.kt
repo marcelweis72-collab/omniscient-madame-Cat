@@ -50,7 +50,10 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -156,11 +159,11 @@ private fun Header(state: OracleUiState, fonts: OracleFonts, onToggleMusic: () -
     ) {
         Column(Modifier.align(Alignment.TopCenter), horizontalAlignment = Alignment.CenterHorizontally) {
             BasicText(
-                "OMNISCIENT",
+                "Omniscient",
                 style = TextStyle(
-                    fontFamily = fonts.title,
-                    fontSize = 14.sp,
-                    letterSpacing = 5.sp,
+                    fontFamily = fonts.deco,
+                    fontSize = 26.sp,
+                    letterSpacing = 1.sp,
                     color = Palette.Amber.copy(alpha = 0.8f),
                     textAlign = TextAlign.Center,
                 ),
@@ -246,7 +249,12 @@ private fun SleepNotice(fonts: OracleFonts, onNewDay: () -> Unit) {
             ),
         )
         BasicText(
-            "Gratis-Spruch wieder in $remaining",
+            buildAnnotatedString {
+                append("Gratis-Spruch wieder in ")
+                withStyle(SpanStyle(fontFamily = fonts.deco, fontSize = 24.sp, letterSpacing = 1.sp)) {
+                    append(remaining)
+                }
+            },
             style = TextStyle(
                 fontFamily = fonts.body,
                 fontSize = 15.sp,

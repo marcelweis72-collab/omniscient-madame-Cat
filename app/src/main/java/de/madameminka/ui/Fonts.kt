@@ -10,11 +10,12 @@ import androidx.compose.ui.text.font.FontStyle
 
 /**
  * Rye für Überschriften (Jahrmarkt-Plakat), IM Fell English für die Sprüche (alter Buchdruck),
- * Lavishly Yours als Schreibschrift für den Namen und kurze Zeilen (nie für lange Texte, schwer lesbar).
+ * Lavishly Yours als Schreibschrift für den Namen und kurze Zeilen (nie für lange Texte, schwer lesbar),
+ * Niconne (Art déco) für "Omniscient" und die Uhrzeit.
  * Beide stehen unter der SIL Open Font License und liegen in assets/fonts/.
  * Fehlen die Dateien, fällt die App auf eine Serifenschrift zurück statt abzustürzen.
  */
-class OracleFonts(val title: FontFamily, val body: FontFamily, val script: FontFamily)
+class OracleFonts(val title: FontFamily, val body: FontFamily, val script: FontFamily, val deco: FontFamily)
 
 @OptIn(ExperimentalTextApi::class)
 @Composable
@@ -37,6 +38,7 @@ fun rememberOracleFonts(): OracleFonts {
                 "IMFellEnglish-Italic.ttf" to FontStyle.Italic,
             ) ?: FontFamily.Serif,
             script = family("LavishlyYours-Regular.ttf" to FontStyle.Normal) ?: FontFamily.Cursive,
+            deco = family("Niconne-Regular.ttf" to FontStyle.Normal) ?: FontFamily.Cursive,
         )
     }
 }
