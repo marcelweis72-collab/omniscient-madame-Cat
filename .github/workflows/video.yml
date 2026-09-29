@@ -1,0 +1,77 @@
+name: Werbevideo
+
+# Rendert das Werbevideo aus der echten App-Szene (Robolectric) und setzt es mit ffmpeg zusammen.
+# Startet von selbst, wenn sich das Video-Drehbuch ändert, sonst per Hand unter "Actions".
+# Fester Link zum Video:
+# https://github.com/<besitzer>/<repo>/releases/download/werbevideo/omniscient-madame-cat-werbung.mp4
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "app/src/test/java/de/madameminka/PromoVideo.kt"
+      - "app/src/test/java/de/madameminka/PromoAudio.kt"
+      - ".github/workflows/video.yml"
+
+jobs:
+  video:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.11.1"
+
+      - name: Schriften laden
+        run: bash tools/fetch-fonts.sh
+
+      - name: Bilder und Ton rendern
+        run: gradle testDebugUnitTest --tests de.madameminka.PromoVideo -Ppromo=true --stacktrace
+
+      - name: ffmpeg bereitstellen
+        run: command -v ffmpeg || (sudo apt-get update -q && sudo apt-get install -y -q ffmpeg)
+
+      - name: Video zusammensetzen
+        run: |
+          source app/build/promo/cues.env
+          audio=app/src/main/assets/audio
+          ffmpeg -y -loglevel error -framerate 30 -i app/build/promo/frames/f%04d.png \
+            -i app/build/promo/mix.wav -i "$audio/meow_1.mp3" -i "$audio/meow_2.mp3" \
+            -filter_complex "[2:a]aresample=44100,adelay=delays=${MEOW1_MS}:all=1,volume=0.8[m1];[3:a]aresample=44100,adelay=delays=${MEOW2_MS}:all=1,volume=0.8[m2];[1:a][m1][m2]amix=inputs=3:duration=first:normalize=0,alimiter=limit=0.9[a]" \
+            -map 0:v -map "[a]" -c:v libx264 -preset slow -crf 18 -pix_fmt yuv420p \
+            -c:a aac -b:a 192k -movflags +faststart omniscient-madame-cat-werbung.mp4
+          cp "app/build/promo/frames/$(ls app/build/promo/frames | tail -1)" omniscient-madame-cat-vorschau.png
+          ls -la omniscient-madame-cat-werbung.mp4
+
+      - name: Als Release "werbevideo" veröffentlichen
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete werbevideo --cleanup-tag --yes || true
+          gh release create werbevideo omniscient-madame-cat-werbung.mp4 omniscient-madame-cat-vorschau.png \
+            --target "$GITHUB_SHA" \
+            --prerelease \
+            --title "Werbevideo" \
+            --notes "Automatisch gerendert aus ${GITHUB_SHA::7}. 1080 x 1920 (9:16), 30 Bilder pro Sekunde."
+
+      # Zusätzlich auf den Branch "video", damit man es im Repo ansehen kann.
+      - name: Video auf Branch "video" ablegen
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p /tmp/video
+          cp omniscient-madame-cat-werbung.mp4 omniscient-madame-cat-vorschau.png /tmp/video/
+          cd /tmp/video
+          git init -q -b video
+          git add .
+          git -c user.name="github-actions" -c user.email="github-actions@users.noreply.github.com" \
+            commit -q -m "Werbevideo für ${GITHUB_SHA::7}"
+          git push -q -f "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" video

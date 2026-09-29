@@ -51,6 +51,9 @@ android {
             isIncludeAndroidResources = true
             all {
                 it.systemProperty("roborazzi.test.record", "true")
+                // Das Werbevideo rendert nur auf Wunsch: gradle testDebugUnitTest -Ppromo=true
+                it.systemProperty("promo", project.findProperty("promo")?.toString() ?: "false")
+                it.maxHeapSize = "2g"
             }
         }
     }
