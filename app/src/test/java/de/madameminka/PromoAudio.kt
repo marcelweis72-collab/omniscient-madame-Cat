@@ -103,6 +103,29 @@ internal class PromoAudio(seconds: Double) {
         }
     }
 
+    /** Heller Glanz, wenn die Augen der Katze aufblitzen. */
+    fun ting(at: Double, gain: Double) {
+        bell(at, hz(100), gain, 1.4)
+        bell(at + 0.03, hz(107), gain * 0.5, 1.0)
+    }
+
+    /** Einschlag beim Lichtblitz: tiefer, fallender Ton und ein kurzes, dumpfes Rauschen. */
+    fun boom(at: Double, gain: Double) {
+        val s0 = (at * RATE).toInt()
+        val n = (1.8 * RATE).toInt()
+        val rnd = Random(5)
+        var phase = 0.0
+        var low = 0.0
+        for (i in 0 until n) {
+            val t = i.toDouble() / RATE
+            phase += 2 * PI * (38 + 60 * exp(-t / 0.18)) / RATE
+            low += 0.02 * (rnd.nextDouble() * 2 - 1 - low)
+            val body = sin(phase) * exp(-t / 0.55)
+            val hit = low * 8 * exp(-t / 0.09)
+            add(s0 + i, gain * smooth(t / 0.004) * (body + hit))
+        }
+    }
+
     /** Die Karte erscheint: tiefe Glocke und ein Arpeggio darüber. */
     fun revealChime(at: Double, gain: Double) {
         bell(at, hz(57), gain * 0.9, 3.0)

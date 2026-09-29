@@ -42,7 +42,7 @@ import kotlin.math.sin
  * (Mond = Wahrsager, Stern = Glückskeks, Pfote = Katze, Schlüssel = Alltag) und der Text im alten Buchdruck.
  */
 @Composable
-fun FortuneCard(spruch: Spruch, fonts: OracleFonts, modifier: Modifier = Modifier) {
+fun FortuneCard(spruch: Spruch, fonts: OracleFonts, modifier: Modifier = Modifier, showHint: Boolean = true) {
     val grain = rememberGrainBrush()
     Box(
         modifier
@@ -69,16 +69,18 @@ fun FortuneCard(spruch: Spruch, fonts: OracleFonts, modifier: Modifier = Modifie
                     textAlign = TextAlign.Center,
                 ),
             )
-            Spacer(Modifier.height(8.dp))
-            BasicText(
-                "antippen zum Zuklappen",
-                style = TextStyle(
-                    fontFamily = fonts.body,
-                    fontStyle = FontStyle.Italic,
-                    fontSize = 12.sp,
-                    color = Palette.Sepia,
-                ),
-            )
+            if (showHint) {
+                Spacer(Modifier.height(8.dp))
+                BasicText(
+                    "antippen zum Zuklappen",
+                    style = TextStyle(
+                        fontFamily = fonts.body,
+                        fontStyle = FontStyle.Italic,
+                        fontSize = 12.sp,
+                        color = Palette.Sepia,
+                    ),
+                )
+            }
         }
     }
 }
