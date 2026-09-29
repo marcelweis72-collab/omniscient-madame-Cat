@@ -678,11 +678,12 @@ private fun EndCard(t: Float, fonts: OracleFonts) {
                         end = Offset(x + 260f, 60f),
                     ),
                     fontFamily = fonts.script,
-                    fontSize = 70.sp,
-                    lineHeight = 74.sp,
+                    fontSize = 62.sp,
+                    lineHeight = 68.sp,
                     textAlign = TextAlign.Center,
                     shadow = Shadow(Palette.Amber.copy(alpha = 0.7f), Offset.Zero, 30f),
                 ),
+                softWrap = false,
             )
             Canvas(Modifier.size(170.dp, 14.dp)) {
                 val y = size.height / 2f
