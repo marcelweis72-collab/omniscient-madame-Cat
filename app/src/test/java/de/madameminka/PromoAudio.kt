@@ -22,8 +22,11 @@ internal class PromoAudio(seconds: Double) {
     private val buf = DoubleArray((seconds * RATE).roundToInt())
     private val total = seconds
 
-    /** Die Musik aus der App (22050 Hz), hochgerechnet auf 44100 Hz, mit Ein- und Ausblenden. */
-    fun music(gain: Double, fadeIn: Double, fadeOut: Double) {
+    /**
+     * Die Musik aus der App (22050 Hz), hochgerechnet auf 44100 Hz, mit Ein- und Ausblenden.
+     * In den Fenstern [ducks] (Beginn, Länge in Sekunden) tritt sie zurück, damit das Miauen durchkommt.
+     */
+    fun music(gain: Double, fadeIn: Double, fadeOut: Double, ducks: List<Pair<Double, Double>> = emptyList()) {
         val src = Synth.music()
         val ratio = Synth.RATE.toDouble() / RATE
         for (i in buf.indices) {
@@ -32,7 +35,10 @@ internal class PromoAudio(seconds: Double) {
             val f = x - x.toInt()
             val s = (src[j] * (1 - f) + src[(j + 1) % src.size] * f) / 32768.0
             val t = i.toDouble() / RATE
-            buf[i] += gain * smooth(t / fadeIn) * smooth((total - t) / fadeOut) * s
+            val duck = ducks.maxOfOrNull { (start, length) ->
+                smooth((t - start + 0.12) / 0.12) * smooth((start + length - t) / 0.3)
+            } ?: 0.0
+            buf[i] += gain * smooth(t / fadeIn) * smooth((total - t) / fadeOut) * (1 - 0.55 * duck) * s
         }
     }
 

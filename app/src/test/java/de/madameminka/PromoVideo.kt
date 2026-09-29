@@ -68,6 +68,12 @@ private const val VIEW_H = 640f
 private const val CAM_TOP = (SCENE_H - VIEW_H) / 2f
 private const val CAM_BOTTOM = -CAM_TOP
 
+/** Beim Nachdenken rückt die Kamera näher an die Kugel, der Titel bleibt noch halb im Bild. */
+private const val THINK_CAM = 55f
+
+/** Das erste Miauen kommt kurz nach dem Funkenlauf der vollen Kugel. */
+private const val MEOW_AFTER_TAP = 0.15
+
 /** Mitte der Kugel als Anteil der Szenenhöhe, gerechnet wie in OracleScene (Tischkante 0.69). */
 private val BALL_Y = run {
     val catSize = minOf(SCENE_W * 0.92f, SCENE_H * 0.48f)
@@ -142,7 +148,7 @@ class PromoVideo {
         play(2.6) { p ->
             val k = ease((p / 0.45f).coerceAtMost(1f))
             zoom.floatValue = 1f + 0.18f * k
-            camY.floatValue = lerp(CAM_TOP, 30f, k)
+            camY.floatValue = lerp(CAM_TOP, THINK_CAM, k)
         }
 
         // Die Karte erscheint, die Kamera zieht zurück und schwenkt nach unten.
@@ -151,7 +157,7 @@ class PromoVideo {
         play(1.4) { p ->
             val k = ease((p / 0.85f).coerceAtMost(1f))
             zoom.floatValue = lerp(1.18f, 1f, k)
-            camY.floatValue = lerp(30f, CAM_BOTTOM, k)
+            camY.floatValue = lerp(THINK_CAM, CAM_BOTTOM, k)
         }
         ui.value = ui.value.copy(mood = CatMood.Idle)
         play(3.2)
@@ -223,10 +229,12 @@ class PromoVideo {
         val seconds = frame.toDouble() / FPS
         val c = cues
         PromoAudio(seconds).apply {
-            music(gain = 0.42, fadeIn = 1.0, fadeOut = 2.0)
+            val meow1 = c.getValue("tap") + MEOW_AFTER_TAP
+            val meow2 = c.getValue("boop")
+            music(gain = 0.42, fadeIn = 1.0, fadeOut = 2.0, ducks = listOf(meow1 to 1.4, meow2 to 1.3))
             whoosh(c.getValue("curtainOpen") - 0.1, 1.6, 0.35)
             shimmer(c.getValue("rubStart"), c.getValue("tap"), 0.16)
-            sparkle(c.getValue("tap"), 0.22)
+            sparkle(c.getValue("tap"), 0.18)
             suspense(c.getValue("thinking"), c.getValue("reveal"), 0.1)
             revealChime(c.getValue("reveal"), 0.3)
             whoosh(c.getValue("curtainClose") - 0.1, 1.2, 0.3)
@@ -234,7 +242,7 @@ class PromoVideo {
         }.writeWav(File(out, "mix.wav"))
         File(out, "cues.env").writeText(
             buildString {
-                appendLine("MEOW1_MS=${(c.getValue("tap") * 1000).roundToInt()}")
+                appendLine("MEOW1_MS=${((c.getValue("tap") + MEOW_AFTER_TAP) * 1000).roundToInt()}")
                 appendLine("MEOW2_MS=${(c.getValue("boop") * 1000).roundToInt()}")
                 appendLine("FRAMES=$frame")
             },
@@ -293,11 +301,33 @@ class PromoVideo {
                     onClosePurchase = {},
                 )
             }
+            TopShade(((CAM_TOP - camY.floatValue) / (CAM_TOP - CAM_BOTTOM)).coerceIn(0f, 1f))
             finger.value?.let { FingerMark(it) }
             StageCurtains(curtain.floatValue, leak = 1f - outro.floatValue)
             if (intro.floatValue > 0f) IntroTitle(intro.floatValue, fonts)
             if (outro.floatValue > 0f) EndCard(outro.floatValue, fonts)
         }
+    }
+}
+
+/**
+ * Schwenkt die Kamera nach unten, ragt der Titel nur noch halb ins Bild.
+ * Ein dunkler Verlauf oben lässt ihn im Zeltdunkel verschwinden.
+ */
+@Composable
+private fun TopShade(strength: Float) {
+    if (strength <= 0.01f) return
+    Canvas(Modifier.fillMaxSize()) {
+        val h = 120.dp.toPx()
+        drawRect(
+            Brush.verticalGradient(
+                0f to Palette.InkDeep.copy(alpha = strength),
+                0.45f to Palette.InkDeep.copy(alpha = 0.85f * strength),
+                1f to Color.Transparent,
+                endY = h,
+            ),
+            size = Size(size.width, h),
+        )
     }
 }
 

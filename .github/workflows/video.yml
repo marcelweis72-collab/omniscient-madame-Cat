@@ -45,7 +45,7 @@ jobs:
           audio=app/src/main/assets/audio
           ffmpeg -y -loglevel error -framerate 30 -i app/build/promo/frames/f%04d.png \
             -i app/build/promo/mix.wav -i "$audio/meow_1.mp3" -i "$audio/meow_2.mp3" \
-            -filter_complex "[2:a]aresample=44100,adelay=delays=${MEOW1_MS}:all=1,volume=0.8[m1];[3:a]aresample=44100,adelay=delays=${MEOW2_MS}:all=1,volume=0.8[m2];[1:a][m1][m2]amix=inputs=3:duration=first:normalize=0,alimiter=limit=0.9[a]" \
+            -filter_complex "[2:a]aresample=44100,adelay=delays=${MEOW1_MS}:all=1,volume=1.5[m1];[3:a]aresample=44100,adelay=delays=${MEOW2_MS}:all=1,volume=1.5[m2];[1:a][m1][m2]amix=inputs=3:duration=first:normalize=0,alimiter=limit=0.9[a]" \
             -map 0:v -map "[a]" -c:v libx264 -preset slow -crf 18 -pix_fmt yuv420p \
             -c:a aac -b:a 192k -movflags +faststart omniscient-madame-cat-werbung.mp4
           cp "app/build/promo/frames/$(ls app/build/promo/frames | tail -1)" omniscient-madame-cat-vorschau.png
